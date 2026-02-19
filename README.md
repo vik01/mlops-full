@@ -6,7 +6,53 @@
 
 ---
 
-## 1. Business Objective
+## 1. Getting Started
+
+Follow these steps to set up the project environment locally.
+
+### 1.1 Create a Python virtual environment
+
+```bash
+python -m venv venv
+```
+
+### 1.2 Activate the virtual environment
+
+**macOS / Linux:**
+```bash
+source venv/bin/activate
+```
+
+**Windows (Command Prompt):**
+```bash
+venv\Scripts\activate
+```
+
+**Windows (PowerShell):**
+```bash
+venv\Scripts\Activate.ps1
+```
+
+### 1.3 Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+To verify the installation:
+```bash
+python -c "import pandas, numpy, sklearn, matplotlib, seaborn; print('All packages installed successfully!')"
+```
+
+### 1.4 Deactivate when done
+
+```bash
+deactivate
+```
+
+---
+
+## 2. Business Objective
 
 * **The Goal:** Reliably predict the presence of heart disease using patients' clinical data, enabling early screening and risk stratification. The model supports clinical decision-making by maximizing true positive detection while minimizing false positives — reducing missed diagnoses and unnecessary follow-up procedures.
 
@@ -14,7 +60,7 @@
 
 ---
 
-## 2. Success Metrics
+## 3. Success Metrics
 
 * **Business KPI (The "Why"):**
   > Improve early detection of heart disease by correctly identifying ≥87% of positive cases (recall) while keeping the false positive rate below 12%, reducing both missed diagnoses and unnecessary referrals.
@@ -29,7 +75,7 @@
 
 ---
 
-## 3. The Data
+## 4. The Data
 
 * **Source:** Synthetic heart disease dataset sourced from OpenML / Kaggle (train.csv and test.csv). The dataset contains 630,000 observations and 13 clinical features.
 * **Target Variable:** `Heart Disease` — binary classification (Presence / Absence).
@@ -55,24 +101,24 @@
 
 ---
 
-## 4. Models
+## 5. Models
 
 Three modeling approaches were applied and compared:
 
-### 4.1 K-Means Clustering (Unsupervised)
+### 5.1 K-Means Clustering (Unsupervised)
 - Used for patient segmentation and risk profiling (not direct prediction).
 - Features were scaled with `StandardScaler`; optimal k=2 selected via Elbow Method and Silhouette Score.
 - **Cluster 0 (High-risk):** Older, predominantly male patients with lower max heart rate, higher ST depression, frequent exercise-induced angina, abnormal thallium results, and more affected vessels.
 - **Cluster 1 (Lower-risk):** Younger patients with balanced gender distribution, minimal ST depression, rare exercise-induced angina, and mostly normal clinical presentation.
 - Ex-post label mapping accuracy: 87.4%
 
-### 4.2 Logistic Regression (Primary Model)
+### 5.2 Logistic Regression (Primary Model)
 - Binary classification with L2 regularization (`lbfgs` solver, `max_iter=2000`).
 - Optimal threshold selected via Youden's J statistic on the ROC curve.
 - **ROC-AUC: 0.9502**
 - **Top 5 predictors:** Exercise angina, Sex, Chest pain type, Number of vessels fluro, Slope of ST.
 
-### 4.3 Decision Tree (Baseline)
+### 5.3 Decision Tree (Baseline)
 - `max_depth=4`, `min_samples_leaf=30` for controlled complexity.
 - Serves as an interpretable reference point, not the primary predictive model.
 
@@ -90,14 +136,14 @@ Three modeling approaches were applied and compared:
 
 ---
 
-## 5. Repository Structure
+## 6. Repository Structure
 
 This project follows a strict separation between "Sandbox" (Notebooks) and "Production" (Src).
 
 ```text
 .
 ├── README.md                # This file (Project definition)
-├── environment.yml          # Dependencies (Conda/Pip)
+├── requirements.txt         # Dependencies (pip)
 ├── config.yaml              # Global configuration (paths, params)
 ├── .env                     # Secrets placeholder
 │
@@ -127,7 +173,7 @@ This project follows a strict separation between "Sandbox" (Notebooks) and "Prod
 
 ---
 
-## 6. Execution Model
+## 7. Execution Model
 
 The full machine learning pipeline will eventually be executable through:
 
@@ -139,7 +185,7 @@ The end goal is to expose a prediction endpoint via a web API so users can submi
 
 ---
 
-## 7. Research Questions
+## 8. Research Questions
 
 1. Which clinical features are most associated with heart disease?
 2. Can unsupervised learning identify meaningful patient risk profiles?
@@ -147,7 +193,7 @@ The end goal is to expose a prediction endpoint via a web API so users can submi
 
 ---
 
-## 8. Key Dependencies
+## 9. Key Dependencies
 
 - Python 3.x
 - pandas
@@ -158,7 +204,7 @@ The end goal is to expose a prediction endpoint via a web API so users can submi
 
 ---
 
-## 9. Next Steps
+## 10. Next Steps
 
 1. **Real-world data validation:** Apply models to real-world clinical datasets and compare performance against the synthetic data used here.
 2. **Optimal threshold tuning:** Further refine the logistic regression decision threshold to minimize false positives in a clinical context.
