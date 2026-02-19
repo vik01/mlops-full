@@ -1,4 +1,4 @@
-# Heart Disease Prediction – MLOps Pipeline
+# Heart Disease Prediction – MLOps Pipelin
 
 **Author:** Vikram Bhatt, Teresa Alvarez, Alessandro Cristofolini, Matteo Khoueiri, Dominique Robson, & Pengchong Zhao  
 **Course:** MLOps: Master in Business Analytics and Data Science  
