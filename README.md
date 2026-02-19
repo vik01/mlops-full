@@ -1,6 +1,6 @@
 # [Project Name: e.g., Retail Sales Forecasting]
 
-**Author:** TODO_STUDENT (Your Group Name or number)  
+**Author:** Vikram Bhatt, Teresa Alvarez, Alessandro Cristofolini, Matteo Khoueiri, Dominique Robson, & Pengchong Zhao  
 **Course:** MLOps: Master in Business Analytics and Data Sciense
 **Status:** Session 1 (Initialization)
 
