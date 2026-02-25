@@ -39,4 +39,4 @@ from src.infer import run_inference
 from src.utils import save_csv, save_model
 
 if __name__ == "__main__":
-    print("Pipeline not implemented yet.")
+    print("Pipeline not implemented yet. HAhaahh")
