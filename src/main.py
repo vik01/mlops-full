@@ -277,7 +277,8 @@ def main():
   # STEP 11: Run inference on example data (first 5 rows of test set)
   # -------------------------------------------------------------------
   print("[main] Step 11 — Running inference on example rows...")  # TODO: replace with logging later
-  # For VIKRAM
+  # DOMINIQUE, PENGCHONG, and MATTEO: Your individual models will need this function and will take the fitted model 
+  # from Step 8 and a dataframe of input features (X_infer) as input.
   X_example = X_test.head(5)
   predictions_df = run_inference(model=model, X_infer=X_example)
 
