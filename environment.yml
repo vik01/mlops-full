@@ -1,4 +1,4 @@
-name: Heart Disease Prediction  # Name of the conda environment
+name: Heart_Disease_Prediction  # Name of the conda environment
 
 channels:
   - conda-forge
