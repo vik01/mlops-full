@@ -28,7 +28,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from src.load_data import load_raw_data
-from src.clean_data import clean_dataframe
+# from src.clean_data import clean_dataframe
 from src.validate import validate_dataframe
 from src.features import get_feature_preprocessor
 
@@ -110,19 +110,18 @@ def main():
   # -------------------------------------------------------------------
   print("[main] Step 2 — Cleaning data...")  # TODO: replace with logging later
   # ALESSANDRO: You for your clean_dataframe() function. You need to take in the raw dataframe and target column name (string).
-  df_clean = clean_dataframe(df_raw, target_column=SETTINGS["target_column"])
+  # df_clean = clean_dataframe(df_raw, target_column=SETTINGS["target_column"])
+  df_clean = pd.DataFrame()
 
   # -------------------------------------------------------------------
   # STEP 3: Save processed CSV
   # -------------------------------------------------------------------
   print("[main] Step 3 — Saving processed CSV...")  # TODO: replace with logging later
-  # For VIKRAM
   save_csv(df_clean, SETTINGS["processed_data_path"])
 
   # -------------------------------------------------------------------
   # STEP 4: Validate cleaned data
   # -------------------------------------------------------------------
-  # for VIKRAM
   print("[main] Step 4 — Validating cleaned data...")  # TODO: replace with logging later
   required_cols = (
       SETTINGS["features"]["quantile_bin"]
@@ -194,7 +193,6 @@ def main():
   #          no fitting here, fitting happens inside train_model)
   # -------------------------------------------------------------------
   print("[main] Step 7 — Building feature preprocessor recipe...")  # TODO: replace with logging later
-  # For VIKRAM
   preprocessor = get_feature_preprocessor(
       quantile_bin_cols=SETTINGS["features"]["quantile_bin"],
       categorical_onehot_cols=SETTINGS["features"]["categorical_onehot"],
@@ -235,32 +233,23 @@ def main():
 #   )
   model = train_kmeans_model(X_train=X_train, preprocessor=preprocessor, n_clusters=SETTINGS["n_bins"],)
 
-#   from kmeans.evaluate import evaluate_kmeans_model
-# from kmeans.infer import run_kmeans_inference
-# from kmeans.train import train_kmeans_model
-
   # -------------------------------------------------------------------
   # STEP 9: Save trained model artifact
   # -------------------------------------------------------------------
   print("[main] Step 9 — Saving model artifact...")  # TODO: replace with logging later
-  # For VIKRAM
   save_model(model, SETTINGS["model_path"])
 
   # -------------------------------------------------------------------
   # STEP 10: Evaluate on held-out test set
   # -------------------------------------------------------------------
   print("[main] Step 10 — Evaluating model on test set...")  # TODO: replace with logging later
-  # DOMINIQUE, PENGCHONG, and MATTEO: Your individual models will need this function and will take 
-  # the fitted model from Step 8, the X_test and y_test dataframes, and the problem type as input. 
-  # You will return a single metric value (float) that represents the model's performance on the 
-  # test set. The metric you choose should be appropriate for your problem type 
-  # (e.g. RMSE for regression, F1 score for classification).
-  metric_value = evaluate_model(
-      model=model,
-      X_test=X_test,
-      y_test=y_test,
-      problem_type=SETTINGS["problem_type"],
-  )
+#   metric_value = evaluate_model(
+#       model=model,
+#       X_test=X_test,
+#       y_test=y_test,
+#       problem_type=SETTINGS["problem_type"],
+#   )
+  metric_value = evaluate_kmeans_model(model=model,X_test=X_test)
   metric_label = "RMSE" if SETTINGS["problem_type"] == "regression" else "F1 (weighted)"
   print(f"[main]   {metric_label}: {metric_value:.4f}")  # TODO: replace with logging later
 
@@ -268,16 +257,13 @@ def main():
   # STEP 11: Run inference on example data (first 5 rows of test set)
   # -------------------------------------------------------------------
   print("[main] Step 11 — Running inference on example rows...")  # TODO: replace with logging later
-  # DOMINIQUE, PENGCHONG, and MATTEO: Your individual models will need this function and will take the fitted model 
-  # from Step 8 and a dataframe of input features (X_infer) as input.
   X_example = X_test.head(5)
-  predictions_df = run_inference(model=model, X_infer=X_example)
+  predictions_df = run_kmeans_inference(model=model, X_infer=X_example)
 
   # -------------------------------------------------------------------
   # STEP 12: Save predictions artifact
   # -------------------------------------------------------------------
   print("[main] Step 12 — Saving predictions CSV...")  # TODO: replace with logging later
-  # For VIKRAM
   save_csv(predictions_df, SETTINGS["predictions_path"])
 
   print("\n[main] Pipeline complete!")  # TODO: replace with logging later

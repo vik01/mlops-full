@@ -1,13 +1,4 @@
 """
-Educational Goal:
-- Why this module exists in an MLOps system:
-    Isolate raw data ingestion so the pipeline does not depend on notebook
-    state.
-- Responsibility (separation of concerns): Only load raw data from disk. No
-  splitting, no cleaning, no feature engineering.
-- Pipeline contract (inputs and outputs): Input is a Path to a CSV file;
-  output is a pandas DataFrame.
-
 TODO: Replace print statements with standard library logging in a later
       session
 TODO: Any temporary or hardcoded variable or parameter will be imported
@@ -21,58 +12,36 @@ from src.utils import load_csv
 
 
 def load_raw_data(raw_data_path: Path) -> pd.DataFrame:
-    """
+    """Will use src.utils.load_csv() to load raw data from a CSV file and return a DataFrame.
     Inputs:
     - raw_data_path: Path to a raw CSV file (train.csv or test.csv)
     Outputs:
     - df_raw: DataFrame containing raw data
-    Why this contract matters for reliable ML delivery:
-    - Centralizing data loading ensures consistent ingestion behavior
-      across training, evaluation, and inference environments.
     """
-    print(
-        f"[load_data.load_raw_data] Loading raw data from: {raw_data_path}"
-    )  # TODO: replace with logging later
+    print(f"[load_data.load_raw_data] Loading raw data from: {raw_data_path}")  # TODO: replace with logging later
 
-    # Fail fast if file does not exist
-    # This prevents silent training on wrong or missing data.
-    if not raw_data_path.exists():
-        raise FileNotFoundError(
-            f"[load_data] File not found at {raw_data_path}. "
-            "Check your SETTINGS configuration and ensure the file "
-            "exists in data/raw/."
-        )
-
-    # Load CSV using centralized utility function
-    # This ensures consistent read behavior across the entire pipeline.
+    # NOTE: src.utils.load_csv() will raise a 
+    #       FileNotFoundError if the file doesn't exist.
     df_raw = load_csv(raw_data_path)
 
-    # --------------------------------------------------------
-    # START STUDENT CODE
-    # --------------------------------------------------------
-    # TODO_STUDENT: Add ingestion-time adjustments ONLY if strictly
-    # necessary. Why: Some datasets may require dtype casting or date
-    # parsing at load time.
-    #
-    # IMPORTANT:
-    # - Do NOT perform cleaning here.
-    # - Do NOT perform feature engineering here.
-    # - Do NOT split train/test here.
-    #
-    # Examples (only if needed):
-    # 1. df_raw["date"] = pd.to_datetime(df_raw["date"])
-    # 2. df_raw["some_numeric_col"] = (
-    #    df_raw["some_numeric_col"].astype("int64"))
-    #
-    # Optional forcing function (leave commented)
-    # raise NotImplementedError(
-    #     "Student: You must implement this logic to proceed!"
-    # )
-    #
-    # Since Kaggle CSV files are already clean and well formatted,
-    # no ingestion adjustments are currently required.
-    # --------------------------------------------------------
-    # END STUDENT CODE
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Make sure column types match expectations
+    # ------------------------------------------------------------------
+    int_64_cols = ["id", "Age", "Sex", "Chest pain type", "BP", 
+                "Cholesterol", "FBS over 120", "EKG results", 
+                "Max HR", "Exercise angina", "Slope of ST",
+                "Number of vessels fluro", "Thallium"
+              ]
+    str_cols, float_64_cols = ["Heart Disease"], ["ST depression"]
+    for columns in df_raw.columns:
+        if columns in int_64_cols:
+            df_raw[columns] = df_raw[columns].astype("int64")
+        elif columns in str_cols:
+            df_raw[columns] = df_raw[columns].astype("str")
+        elif columns in float_64_cols:
+            df_raw[columns] = df_raw[columns].astype("float64")
+
+    # NOTE: Since Kaggle CSV files are already clean and well formatted,
+    #       no additional ingestion adjustments are currently required.
 
     return df_raw
