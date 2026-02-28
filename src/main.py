@@ -31,47 +31,37 @@ from src.load_data import load_raw_data
 from src.clean_data import clean_dataframe
 from src.validate import validate_dataframe
 from src.features import get_feature_preprocessor
-from src.train import train_model
-from src.evaluate import evaluate_model
-from src.infer import run_inference
+
+# Get kmeans functions
+from kmeans.evaluate import evaluate_kmeans_model
+from kmeans.infer import run_kmeans_inference
+from kmeans.train import train_kmeans_model
+
 from src.utils import save_csv, save_model
 
 # ===========================================================================
 # 2. CONFIGURATION  —  SETTINGS BRIDGE
-#    !! STUDENTS: You MUST update every value below to match YOUR dataset !!
-#    This dict acts as a lightweight stand-in for a real config.yml file.
-#    Every key here will later be loaded from YAML so keep names consistent.
 # ===========================================================================
 SETTINGS = {
-    # ------------------------------------------------------------------
-    # Set to False once you have replaced all dummy values with real ones
-    # ------------------------------------------------------------------
     "is_example_config": False,
-
-    # Paths (relative to repo root — run with: python -m src.main)
     "raw_data_path":       Path("data/raw/train.csv"),
     "processed_data_path": Path("data/processed/clean.csv"),
     "model_path":          Path("models/model.joblib"),
     "predictions_path":    Path("reports/predictions.csv"),
-
-    # Target
     "target_column": "Heart Disease",
     "problem_type": "classification",
-
-    # Train / test split
     "test_size":    0.2,
     "random_state": 42,
-
-    # Feature configuration — pre-wired to the dummy CSV columns so the
-    # pipeline runs out of the box. Replace with your real column names.
     "features": {
-        "quantile_bin":        ["Age", "BP", "Cholesterol", "Max HR", "ST depression"], # numeric cols to bin (e.g. ["age"])
-        "categorical_onehot":  [],  # categorical cols to one-hot encode
-        "numeric_passthrough": ["id", "Sex", "Chest pain type", "FBS over 120", 
-                                "EKG results", "Exercise angina", "Slope of ST", 
-                                "Number of vessels fluro", "Thallium"],  # numeric cols passed through as-is
-        "n_bins":              3,   # number of quantile bins
-    },
+        "quantile_bin":        ["ST depression"],
+        "categorical_onehot":  [],
+        "numeric_passthrough": ["id", "Sex", "FBS over 120", 
+                                "EKG results", "Exercise angina"],
+        "ordinal_encode": ["Chest pain type", "Number of vessels fluro", 
+                           "Thallium", "Slope of ST"],
+        "min_max_scaler": ["Age", "BP", "Cholesterol", "Max HR"],
+        "n_bins": 5
+    }
 }
 
 # ===========================================================================
@@ -237,16 +227,17 @@ def main():
   # STEP 8: Train model (Pipeline: preprocess + estimator, fit on train)
   # -------------------------------------------------------------------
   print("[main] Step 8 — Training model...")  # TODO: replace with logging later
-  # DOMINIQUE, PENGCHONG, and MATTEO: Your individual models 
-  # will need this function and will take a 2 dataframes, X-train and y-train, and the preprocessor object as input. 
-  # You will return a fitted sklearn Pipeline that includes both the preprocessor and your estimator. '
-  # The train_model() function will also need to know the problem type (classification or regression) to decide which metric to optimize during training.
-  model = train_model(
-      X_train=X_train,
-      y_train=y_train,
-      preprocessor=preprocessor,
-      problem_type=SETTINGS["problem_type"],
-  )
+#   model = train_kmeans_model(
+#       X_train=X_train,
+#       y_train=y_train,
+#       preprocessor=preprocessor,
+#       problem_type=SETTINGS["problem_type"],
+#   )
+  model = train_kmeans_model(X_train=X_train, preprocessor=preprocessor, n_clusters=SETTINGS["n_bins"],)
+
+#   from kmeans.evaluate import evaluate_kmeans_model
+# from kmeans.infer import run_kmeans_inference
+# from kmeans.train import train_kmeans_model
 
   # -------------------------------------------------------------------
   # STEP 9: Save trained model artifact

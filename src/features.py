@@ -1,17 +1,4 @@
 """
-Educational Goal:
-- Why this module exists in an MLOps system: Feature engineering transformations must be
-  defined ONCE and bundled with the model so that training and inference always apply
-  the exact same transformations. Without this, you get silent inconsistencies between
-  what the model was trained on and what it receives at prediction time — a common cause
-  of production bugs.
-- Responsibility (separation of concerns): features.py owns ONLY the transformation
-  recipe (the "what to do" and "how to do it"). It does NOT load data, fit on data, or
-  make predictions. It returns a ColumnTransformer that is later fitted inside train.py.
-- Pipeline contract (inputs and outputs):
-    Inputs : configuration lists of column names and binning parameters
-    Outputs: a scikit-learn ColumnTransformer object (unfitted recipe only)
-
 TODO: Replace print statements with standard library logging in a later session
 TODO: Any temporary or hardcoded variable or parameter will be imported from config.yml in a later session
 """
@@ -19,11 +6,13 @@ TODO: Any temporary or hardcoded variable or parameter will be imported from con
 from typing import Optional, List
 
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import KBinsDiscretizer, OneHotEncoder
+from sklearn.preprocessing import KBinsDiscretizer, OneHotEncoder, MinMaxScaler, OrdinalEncoder
 
 def get_feature_preprocessor(
     quantile_bin_cols: Optional[List[str]] = None,
     categorical_onehot_cols: Optional[List[str]] = None,
+    min_max_cols: Optional[List[str]] = None,
+    ordinal_encode_cols: Optional[List[str]] = None,
     numeric_passthrough_cols: Optional[List[str]] = None,
     n_bins: int = 3,
 ):
@@ -47,7 +36,14 @@ def get_feature_preprocessor(
     # Apply defaults: treat None as empty list
     quantile_bin_cols = quantile_bin_cols or []
     categorical_onehot_cols = categorical_onehot_cols or []
+    min_max_cols = min_max_cols or []
+    ordinal_encode_cols = ordinal_encode_cols or []
     numeric_passthrough_cols = numeric_passthrough_cols or []
+    
+    # Build the list of (name, transformer, columns) tuples.
+    # A transformer step is only added if its column list is non-empty
+    # so the pipeline stays clean when a list is not used.
+    transformers = []
 
     # ------------------------------------------------------------------
     # TRANSFORMER 1: Quantile binning for numeric columns
@@ -57,77 +53,45 @@ def get_feature_preprocessor(
     # encode="ordinal" keeps output as integers (not one-hot sparse),
     # which is efficient and works well with linear and tree-based models.
     # ------------------------------------------------------------------
-    bin_transformer = KBinsDiscretizer(
-        n_bins=n_bins,
-        encode="ordinal",
-        strategy="quantile",
-    )
+    if quantile_bin_cols:
+        bin_transformer = KBinsDiscretizer(
+            n_bins=n_bins,
+            encode="ordinal",
+            strategy="quantile",
+        )   
+        transformers.append(("quantile_bin", bin_transformer, quantile_bin_cols))
 
     # ------------------------------------------------------------------
     # TRANSFORMER 2: One-hot encoding for categorical columns
-    # OneHotEncoder converts a categorical column (e.g. "color": red/blue)
-    # into binary indicator columns (color_red=1/0, color_blue=1/0).
-    # handle_unknown="ignore" makes unseen categories at inference time
-    # produce an all-zeros row instead of crashing.
-    # try/except handles a scikit-learn API change:
-    #   sparse_output=False  (scikit-learn >= 1.2)
-    #   sparse=False         (scikit-learn <= 1.1)
     # ------------------------------------------------------------------
-    try:
-        ohe = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
-    except TypeError:
-        ohe = OneHotEncoder(handle_unknown="ignore", sparse=False)
-    
-    # ------------------------------------------------------------------
-    # TRANSFORMER 3: Numeric passthrough
-    # "passthrough" is a built-in sklearn keyword — it tells the
-    # ColumnTransformer to keep these columns exactly as they are,
-    # with no transformation applied.
-    # ------------------------------------------------------------------
-
-    # Build the list of (name, transformer, columns) tuples.
-    # A transformer step is only added if its column list is non-empty
-    # so the pipeline stays clean when a list is not used.
-    transformers = []
-
-    if quantile_bin_cols:
-        transformers.append(("quantile_bin", bin_transformer, quantile_bin_cols))
-
     if categorical_onehot_cols:
+        try:
+            ohe = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+        except TypeError:
+            ohe = OneHotEncoder(handle_unknown="ignore", sparse=False)
         transformers.append(("onehot", ohe, categorical_onehot_cols))
 
+    # ------------------------------------------------------------------
+    # TRANSFORMER 3: Passthrough for numeric columns that don't need transformation
+    # ------------------------------------------------------------------
     if numeric_passthrough_cols:
         transformers.append(("passthrough", "passthrough", numeric_passthrough_cols))
-    
-    # --------------------------------------------------------
-    # START STUDENT CODE
-    # --------------------------------------------------------
-    # TODO_STUDENT: Add or adjust transformers for your specific dataset.
-    # Why: Different datasets require different transformation strategies.
-    #      The three transformers above cover the most common cases, but
-    #      your data may need additional steps.
-    # Examples:
-    # 1. Add StandardScaler for columns that need zero-mean normalisation:
-    #    from sklearn.preprocessing import StandardScaler
-    #    transformers.append(("scaler", StandardScaler(), ["income", "age"]))
-    # 2. Use OrdinalEncoder instead of OHE for high-cardinality categoricals:
-    #    from sklearn.preprocessing import OrdinalEncoder
-    #    transformers.append(("ordinal", OrdinalEncoder(), ["education_level"]))
-    #
-    # Optional forcing function (leave commented)
-    # raise NotImplementedError("Student: You must implement this logic to proceed!")
-    #
-    # Placeholder (Remove this after implementing your code):
-    print("Warning: Student has not implemented this section yet")
-    # --------------------------------------------------------
-    # END STUDENT CODE
-    # --------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # TRANSFORMER 3: MinMaxScaler for numeric columns that need zero-mean normalisation
+    # ------------------------------------------------------------------
+    if min_max_cols:
+        transformers.append(("scaler", MinMaxScaler(), min_max_cols))
+
+    # ------------------------------------------------------------------
+    # TRANSFORMER 4: OrdinalEncoder for high-cardinality categorical columns
+    # ------------------------------------------------------------------
+    if ordinal_encode_cols:
+        ordinal_encoder = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
+        transformers.append(("ordinal", ordinal_encoder, ordinal_encode_cols))
 
     # ------------------------------------------------------------------
     # Assemble the ColumnTransformer
-    # remainder="drop" means any column NOT explicitly listed above will
-    # be silently dropped. This is intentional — the pipeline only
-    # processes columns you have configured in SETTINGS.
     # ------------------------------------------------------------------
     preprocessor = ColumnTransformer(
         transformers=transformers,
