@@ -1,16 +1,4 @@
 """
-Educational Goal:
-- Why this module exists in an MLOps system: Data is the most common failure point in
-  ML pipelines. A validation layer catches schema mismatches, empty DataFrames, and
-  missing columns early — before they cause cryptic errors inside scikit-learn or,
-  worse, silently produce a model trained on the wrong data.
-- Responsibility (separation of concerns): validate.py owns ONLY data quality checks.
-  It does not transform data or make predictions. It either confirms the data is safe
-  to use or raises a clear, actionable error.
-- Pipeline contract (inputs and outputs):
-    Inputs : a cleaned pd.DataFrame and a list of column names that must be present
-    Outputs: True if all checks pass, raises ValueError or TypeError if not
-
 TODO: Replace print statements with standard library logging in a later session
 TODO: Any temporary or hardcoded variable or parameter will be imported from config.yml in a later session
 """
@@ -25,18 +13,13 @@ def validate_dataframe(df: pd.DataFrame, required_columns: list) -> bool:
     - required_columns: list of column name strings that must exist in the DataFrame
     Outputs:
     - True if all checks pass
-    - Raises ValueError if the DataFrame is empty or a required column is missing
-    Why this contract matters for reliable ML delivery:
-    - Catching data issues here — before training — means errors are surfaced with
-      clear, human-readable messages rather than cryptic scikit-learn or numpy errors.
-      It also means the pipeline fails loudly at the right step, making debugging fast.
+    - Raises ValueError if the DataFrame misses required columns, has too many nulls, 
+    contains unexpected target values, or fails any other checks.
     """
     print("[validate] Running data validation checks...")  # TODO: replace with logging later
 
     # ------------------------------------------------------------------
     # CHECK 1: DataFrame must not be empty
-    # An empty DataFrame almost always means a broken data path or a
-    # filtering step that removed all rows. Fail immediately.
     # ------------------------------------------------------------------
     if df.empty:
         raise ValueError(
@@ -46,8 +29,6 @@ def validate_dataframe(df: pd.DataFrame, required_columns: list) -> bool:
 
     # ------------------------------------------------------------------
     # CHECK 2: All required columns must be present
-    # The required_columns list is built in main.py from SETTINGS, so
-    # this check enforces that the SETTINGS config matches the actual data.
     # ------------------------------------------------------------------
     missing = [col for col in required_columns if col not in df.columns]
     if missing:
@@ -56,37 +37,73 @@ def validate_dataframe(df: pd.DataFrame, required_columns: list) -> bool:
             "Check that your SETTINGS in main.py match the actual column names in your CSV."
         )
 
-    # --------------------------------------------------------
-    # START STUDENT CODE
-    # --------------------------------------------------------
-    # TODO_STUDENT: Add dataset-specific quality checks here.
-    # Why: Every dataset has its own rules for what "valid" data looks like.
-    #      Generic checks above catch obvious schema issues, but you should
-    #      add checks for your specific columns and business logic.
-    # Examples:
-    # 1. Check for too many nulls in a critical column:
-    #    null_rate = df["Age"].isnull().mean()
-    #    if null_rate > 0.1:
-    #        raise ValueError(f"[validate] 'Age' has {null_rate:.0%} nulls — too many to proceed.")
-    #
-    # 2. Check that the target column contains only expected values:
-    #    valid_targets = {0, 1}
-    #    unexpected = set(df["Heart Disease"].unique()) - valid_targets
-    #    if unexpected:
-    #        raise ValueError(f"[validate] Unexpected target values: {unexpected}")
-    #
-    # 3. Check that a numeric column has no negative values:
-    #    if (df["Age"] < 0).any():
-    #        raise ValueError("[validate] 'Age' contains negative values.")
-    #
-    # Optional forcing function (leave commented)
-    # raise NotImplementedError("Student: You must implement this logic to proceed!")
-    #
-    # Placeholder (Remove this after implementing your code):
-    print("Warning: Student has not implemented this section yet")
-    # --------------------------------------------------------
-    # END STUDENT CODE
-    # --------------------------------------------------------
+    # ------------------------------------------------------------------
+    # CHECK 3: Check for nulls (data must have less than 10% nulls in any column)
+    # ------------------------------------------------------------------
+    null_rates = df.isnull().mean()
+    high_null_cols = null_rates[null_rates > 0.1].index.tolist()
+    if high_null_cols:
+        raise ValueError(
+            f"[validate] The following columns have more than 10% nulls: {high_null_cols}\n"
+            "Consider imputing or dropping these columns."
+        )
+
+    # ------------------------------------------------------------------
+    # CHECK 4: Check that the target column contains only expected values
+    # ------------------------------------------------------------------
+    valid_targets = ["Presence", "Absence"]
+    unexpected = set(df["Heart Disease"].unique()) - set(valid_targets)
+    if unexpected:
+        raise ValueError(
+            f"[validate] Unexpected target values in 'Heart Disease' column: {unexpected}\n"
+            f"Expected values are: {valid_targets}"
+        )
+
+    # ------------------------------------------------------------------
+    # CHECK 5: Check that numeric columns have no negative values (example of a custom check)
+    # ------------------------------------------------------------------
+    numeric_cols = df.select_dtypes(include=["number"]).columns
+    for col in numeric_cols:
+        if (df[col] < 0).any():
+            raise ValueError(f"[validate] Numeric column '{col}' contains negative values.")
+
+    # ------------------------------------------------------------------
+    # CHECK 6: No duplicate rows
+    # ------------------------------------------------------------------
+    n_duplicates = df.duplicated().sum()
+    if n_duplicates > 0:
+        raise ValueError(
+            f"[validate] DataFrame contains {n_duplicates} duplicate row(s).\n"
+            "Remove duplicates before training to avoid data leakage."
+        )
+
+    # ------------------------------------------------------------------
+    # CHECK 7: Binary columns must contain only 0 or 1
+    # 'Sex', 'FBS over 120', and 'Exercise angina' are binary flags.
+    # ------------------------------------------------------------------
+    binary_cols = ["Sex", "FBS over 120", "Exercise angina"]
+    valid_binary = {0, 1}
+    for col in binary_cols:
+        if col in df.columns:
+            unexpected_vals = set(df[col].unique()) - valid_binary
+            if unexpected_vals:
+                raise ValueError(
+                    f"[validate] Binary column '{col}' contains unexpected values: {unexpected_vals}\n"
+                    f"Expected only {{0, 1}}. Check your encoding step in clean_data.py."
+                )
+
+    # ------------------------------------------------------------------
+    # CHECK 8: Age must be within a medically plausible range (0–120)
+    # ------------------------------------------------------------------
+    if "Age" in df.columns:
+        age_min, age_max = 0, 120
+        out_of_range = df[(df["Age"] < age_min) | (df["Age"] > age_max)]
+        if not out_of_range.empty:
+            raise ValueError(
+                f"[validate] 'Age' column contains {len(out_of_range)} value(s) outside the "
+                f"expected range [{age_min}, {age_max}].\n"
+                "Check your raw data source for data entry errors."
+            )
 
     print(f"[validate]   Shape: {df.shape[0]} rows x {df.shape[1]} columns.")  # TODO: replace with logging later
     print(f"[validate]   All {len(required_columns)} required columns present.")  # TODO: replace with logging later
