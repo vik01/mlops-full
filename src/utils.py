@@ -1,16 +1,4 @@
 """
-Educational Goal:
-- Why this module exists in an MLOps system: Every pipeline needs to read and write
-  files — raw data, processed data, trained models, and predictions. Centralising all
-  I/O operations in one place means the rest of the codebase never needs to know WHERE
-  or HOW data is stored. If the storage format changes (e.g. CSV to Parquet, joblib to
-  pickle), you update one file, not six.
-- Responsibility (separation of concerns): utils.py owns ONLY file system interactions.
-  It does not transform data, train models, or make decisions about the pipeline logic.
-- Pipeline contract (inputs and outputs):
-    Inputs : file paths (pathlib.Path objects) and data/model objects
-    Outputs: DataFrames loaded from disk, or None (side-effect: files written to disk)
-
 TODO: Replace print statements with standard library logging in a later session
 TODO: Any temporary or hardcoded variable or parameter will be imported from config.yml in a later session
 """
@@ -19,139 +7,98 @@ from pathlib import Path
 
 import joblib
 import pandas as pd
+import csv
+
+def _check_path_exists(filepath: Path) -> bool:
+    """Check if the given file path exists on disk. If not, raise a FileNotFoundError with a clear message.\n
+    Inputs:
+    - filepath: a pathlib.Path pointing to the file to check\n
+    Outputs:
+    - bool indicating whether the file exists on disk
+    """
+    if not filepath.exists():
+      raise FileNotFoundError(f"File not found: {filepath}")
+    
+
+def _get_csv_delimiter(filepath: Path) -> str:
+    """Get the delimiter used in the CSV file by reading a sample of the file and using csv.Sniffer.\n
+    Inputs:
+    - filepath: a pathlib.Path pointing to the CSV file to check\n
+    Outputs:
+    - str representing the delimiter used in the CSV file
+    """
+    with open(filepath, 'r') as f:
+        dialect = csv.Sniffer().sniff(f.read(1024))
+        return dialect.delimiter
+    
+def _make_parent_dir(filepath: Path) -> None:
+    """Create the parent directory for the given file path if it doesn't already exist.\n
+    Inputs:
+    - filepath: a pathlib.Path pointing to the file whose parent directory should be created\n
+    Outputs:
+    - None (side-effect: parent directory created on disk if it didn't exist)
+    """
+    filepath.parent.mkdir(parents=True, exist_ok=True)
 
 
 def load_csv(filepath: Path) -> pd.DataFrame:
-    """
+    """Load the csv file from the given filepath and return it as a pandas DataFrame.\n
     Inputs:
-    - filepath: a pathlib.Path pointing to the CSV file to read
+    - filepath: a pathlib.Path pointing to the CSV file to read\n
     Outputs:
     - pd.DataFrame containing the contents of the CSV file
-    Why this contract matters for reliable ML delivery:
-    - A single load function means all CSV reads go through the same code path.
-      You can add encoding handling, dtype enforcement, or audit logging here once
-      and every caller benefits automatically.
     """
+
+    # Make sure file exists
+    _check_path_exists(filepath)
     print(f"[utils] Loading CSV from: {filepath}")  # TODO: replace with logging later
 
-    # --------------------------------------------------------
-    # START STUDENT CODE
-    # --------------------------------------------------------
-    # TODO_STUDENT: Adjust read parameters to match your file.
-    # Why: Different datasets may need encoding, separators, or dtypes specified.
-    # Examples:
-    # 1. pd.read_csv(filepath, encoding="latin-1")  — for non-UTF-8 files
-    # 2. pd.read_csv(filepath, sep=";")             — for semicolon-delimited files
-    #
-    # Optional forcing function (leave commented)
-    # raise NotImplementedError("Student: You must implement this logic to proceed!")
-    # --------------------------------------------------------
-    # END STUDENT CODE
-    # --------------------------------------------------------
-
-    df = pd.read_csv(filepath)
+    df = pd.read_csv(filepath, sep=_get_csv_delimiter(filepath))
     print(f"[utils]   Loaded {len(df)} rows x {len(df.columns)} columns.")  # TODO: replace with logging later
     return df
 
 
 def save_csv(df: pd.DataFrame, filepath: Path) -> None:
-    """
+    """Save the given DataFrame to a CSV file at the specified filepath. 
+    If the parent directory doesn't exist, it will be created.\n
     Inputs:
     - df      : the DataFrame to write to disk
-    - filepath: a pathlib.Path for the destination CSV file
+    - filepath: a pathlib.Path for the destination CSV file\n
     Outputs:
     - None (side-effect: CSV file written to disk)
-    Why this contract matters for reliable ML delivery:
-    - Centralising CSV writes means every artifact is saved consistently
-      (no index column, predictable encoding). It also auto-creates the parent
-      directory, preventing FileNotFoundError in fresh environments or CI.
     """
+    _make_parent_dir(filepath)
     print(f"[utils] Saving CSV to: {filepath}")  # TODO: replace with logging later
 
-    filepath.parent.mkdir(parents=True, exist_ok=True)
-
-    # --------------------------------------------------------
-    # START STUDENT CODE
-    # --------------------------------------------------------
-    # TODO_STUDENT: Adjust save parameters if needed.
-    # Why: Some workflows need the index preserved, or a different separator.
-    # Examples:
-    # 1. df.to_csv(filepath, index=True)   — keep row index in the file
-    # 2. df.to_csv(filepath, sep=";")      — semicolon-delimited output
-    #
-    # Optional forcing function (leave commented)
-    # raise NotImplementedError("Student: You must implement this logic to proceed!")
-    # --------------------------------------------------------
-    # END STUDENT CODE
-    # --------------------------------------------------------
-
-    df.to_csv(filepath, index=False)
+    df.to_csv(filepath, index=False, sep=",")
     print(f"[utils]   Saved {len(df)} rows to {filepath}")  # TODO: replace with logging later
 
 
 def save_model(model, filepath: Path) -> None:
-    """
+    """Save the given model object to a .joblib file at the specified filepath. 
+    If the parent directory doesn't exist, it will be created.\n
     Inputs:
     - model   : a fitted scikit-learn Pipeline (or any joblib-serialisable object)
-    - filepath: a pathlib.Path for the destination .joblib file
+    - filepath: a pathlib.Path for the destination .joblib file\n
     Outputs:
     - None (side-effect: model serialised to disk)
-    Why this contract matters for reliable ML delivery:
-    - Saving the full Pipeline (preprocessor + estimator together) guarantees that
-      inference always applies the exact same transformations the model was trained
-      with. Saving just the estimator is a common mistake that causes silent bugs.
     """
+    _make_parent_dir(filepath)
     print(f"[utils] Saving model to: {filepath}")  # TODO: replace with logging later
 
-    filepath.parent.mkdir(parents=True, exist_ok=True)
-
-    # --------------------------------------------------------
-    # START STUDENT CODE
-    # --------------------------------------------------------
-    # TODO_STUDENT: Adjust the joblib.dump parameters if needed.
-    # Why: compress=3 is a good default for smaller file sizes on disk.
-    # Examples:
-    # 1. joblib.dump(model, filepath, compress=3)  — compressed save
-    # 2. joblib.dump(model, filepath, compress=0)  — no compression, faster write
-    #
-    # Optional forcing function (leave commented)
-    # raise NotImplementedError("Student: You must implement this logic to proceed!")
-    # --------------------------------------------------------
-    # END STUDENT CODE
-    # --------------------------------------------------------
-
-    joblib.dump(model, filepath)
+    joblib.dump(model, filepath, compress=3)
     print(f"[utils]   Model saved to {filepath}")  # TODO: replace with logging later
 
 
 def load_model(filepath: Path):
-    """
+    """Load and return the model object from the specified .joblib file.\n
     Inputs:
-    - filepath: a pathlib.Path pointing to a .joblib model file
+    - filepath: a pathlib.Path pointing to a .joblib model file\n
     Outputs:
     - The deserialised model object (typically a fitted sklearn Pipeline)
-    Why this contract matters for reliable ML delivery:
-    - A dedicated load function is the correct place to add version checks or
-      compatibility warnings in the future (e.g. warn if model was trained on a
-      different scikit-learn version). Calling joblib.load directly everywhere
-      makes those checks impossible to add consistently.
     """
+    _check_path_exists(filepath)
     print(f"[utils] Loading model from: {filepath}")  # TODO: replace with logging later
-
-    # --------------------------------------------------------
-    # START STUDENT CODE
-    # --------------------------------------------------------
-    # TODO_STUDENT: Add a file existence check if needed for your deployment.
-    # Why: In production, a missing model file should produce a clear error message,
-    #      not a cryptic FileNotFoundError deep in joblib.
-    # Examples:
-    # 1. if not filepath.exists(): raise FileNotFoundError(f"Model not found: {filepath}")
-    #
-    # Optional forcing function (leave commented)
-    # raise NotImplementedError("Student: You must implement this logic to proceed!")
-    # --------------------------------------------------------
-    # END STUDENT CODE
-    # --------------------------------------------------------
 
     model = joblib.load(filepath)
     print(f"[utils]   Model loaded from {filepath}")  # TODO: replace with logging later
