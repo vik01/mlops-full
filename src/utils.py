@@ -9,12 +9,10 @@ import joblib
 import pandas as pd
 import csv
 
-def _check_path_exists(filepath: Path) -> bool:
+def _check_path_exists(filepath: Path):
     """Check if the given file path exists on disk. If not, raise a FileNotFoundError with a clear message.\n
     Inputs:
     - filepath: a pathlib.Path pointing to the file to check\n
-    Outputs:
-    - bool indicating whether the file exists on disk
     """
     if not filepath.exists():
       raise FileNotFoundError(f"File not found: {filepath}")
