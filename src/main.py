@@ -1,5 +1,5 @@
 """
-Module: Main Pipeline Blah
+Module: Main Pipeline
 ---------------------
 Role: Orchestrate the entire flow (Load -> Clean -> Validate -> Train -> Evaluate).
 Usage: python -m src.main
