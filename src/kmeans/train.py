@@ -24,6 +24,9 @@ def train_kmeans_model(X_train: pd.DataFrame, preprocessor, n_clusters: int):
     - Bundles preprocessing and model to prevent training-serving skew.
     """
     print("[kmeans.train] Training KMeans Pipeline")  # TODO
+    
+    if n_clusters < 1:
+        raise ValueError("n_clusters must be >= 1")
 
     model = Pipeline([
         ("preprocess", preprocessor),
