@@ -28,50 +28,40 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from src.load_data import load_raw_data
-from src.clean_data import clean_dataframe
+# from src.clean_data import clean_dataframe
 from src.validate import validate_dataframe
 from src.features import get_feature_preprocessor
-from src.train import train_model
-from src.evaluate import evaluate_model
-from src.infer import run_inference
+
+# Get kmeans functions
+from kmeans.evaluate import evaluate_kmeans_model
+from kmeans.infer import run_kmeans_inference
+from kmeans.train import train_kmeans_model
+
 from src.utils import save_csv, save_model
 
 # ===========================================================================
 # 2. CONFIGURATION  —  SETTINGS BRIDGE
-#    !! STUDENTS: You MUST update every value below to match YOUR dataset !!
-#    This dict acts as a lightweight stand-in for a real config.yml file.
-#    Every key here will later be loaded from YAML so keep names consistent.
 # ===========================================================================
 SETTINGS = {
-    # ------------------------------------------------------------------
-    # Set to False once you have replaced all dummy values with real ones
-    # ------------------------------------------------------------------
     "is_example_config": False,
-
-    # Paths (relative to repo root — run with: python -m src.main)
     "raw_data_path":       Path("data/raw/train.csv"),
     "processed_data_path": Path("data/processed/clean.csv"),
     "model_path":          Path("models/model.joblib"),
     "predictions_path":    Path("reports/predictions.csv"),
-
-    # Target
     "target_column": "Heart Disease",
     "problem_type": "classification",
-
-    # Train / test split
     "test_size":    0.2,
     "random_state": 42,
-
-    # Feature configuration — pre-wired to the dummy CSV columns so the
-    # pipeline runs out of the box. Replace with your real column names.
     "features": {
-        "quantile_bin":        ["Age", "BP", "Cholesterol", "Max HR", "ST depression"], # numeric cols to bin (e.g. ["age"])
-        "categorical_onehot":  [],  # categorical cols to one-hot encode
-        "numeric_passthrough": ["id", "Sex", "Chest pain type", "FBS over 120", 
-                                "EKG results", "Exercise angina", "Slope of ST", 
-                                "Number of vessels fluro", "Thallium"],  # numeric cols passed through as-is
-        "n_bins":              3,   # number of quantile bins
-    },
+        "quantile_bin":        ["ST depression"],
+        "categorical_onehot":  [],
+        "numeric_passthrough": ["id", "Sex", "FBS over 120", 
+                                "EKG results", "Exercise angina"],
+        "ordinal_encode": ["Chest pain type", "Number of vessels fluro", 
+                           "Thallium", "Slope of ST"],
+        "min_max_scaler": ["Age", "BP", "Cholesterol", "Max HR"],
+        "n_bins": 5
+    }
 }
 
 # ===========================================================================
@@ -120,19 +110,18 @@ def main():
   # -------------------------------------------------------------------
   print("[main] Step 2 — Cleaning data...")  # TODO: replace with logging later
   # ALESSANDRO: You for your clean_dataframe() function. You need to take in the raw dataframe and target column name (string).
-  df_clean = clean_dataframe(df_raw, target_column=SETTINGS["target_column"])
+  # df_clean = clean_dataframe(df_raw, target_column=SETTINGS["target_column"])
+  df_clean = pd.DataFrame()
 
   # -------------------------------------------------------------------
   # STEP 3: Save processed CSV
   # -------------------------------------------------------------------
   print("[main] Step 3 — Saving processed CSV...")  # TODO: replace with logging later
-  # For VIKRAM
   save_csv(df_clean, SETTINGS["processed_data_path"])
 
   # -------------------------------------------------------------------
   # STEP 4: Validate cleaned data
   # -------------------------------------------------------------------
-  # for VIKRAM
   print("[main] Step 4 — Validating cleaned data...")  # TODO: replace with logging later
   required_cols = (
       SETTINGS["features"]["quantile_bin"]
@@ -204,7 +193,6 @@ def main():
   #          no fitting here, fitting happens inside train_model)
   # -------------------------------------------------------------------
   print("[main] Step 7 — Building feature preprocessor recipe...")  # TODO: replace with logging later
-  # For VIKRAM
   preprocessor = get_feature_preprocessor(
       quantile_bin_cols=SETTINGS["features"]["quantile_bin"],
       categorical_onehot_cols=SETTINGS["features"]["categorical_onehot"],
@@ -237,39 +225,31 @@ def main():
   # STEP 8: Train model (Pipeline: preprocess + estimator, fit on train)
   # -------------------------------------------------------------------
   print("[main] Step 8 — Training model...")  # TODO: replace with logging later
-  # DOMINIQUE, PENGCHONG, and MATTEO: Your individual models 
-  # will need this function and will take a 2 dataframes, X-train and y-train, and the preprocessor object as input. 
-  # You will return a fitted sklearn Pipeline that includes both the preprocessor and your estimator. '
-  # The train_model() function will also need to know the problem type (classification or regression) to decide which metric to optimize during training.
-  model = train_model(
-      X_train=X_train,
-      y_train=y_train,
-      preprocessor=preprocessor,
-      problem_type=SETTINGS["problem_type"],
-  )
+#   model = train_kmeans_model(
+#       X_train=X_train,
+#       y_train=y_train,
+#       preprocessor=preprocessor,
+#       problem_type=SETTINGS["problem_type"],
+#   )
+  model = train_kmeans_model(X_train=X_train, preprocessor=preprocessor, n_clusters=SETTINGS["n_bins"],)
 
   # -------------------------------------------------------------------
   # STEP 9: Save trained model artifact
   # -------------------------------------------------------------------
   print("[main] Step 9 — Saving model artifact...")  # TODO: replace with logging later
-  # For VIKRAM
   save_model(model, SETTINGS["model_path"])
 
   # -------------------------------------------------------------------
   # STEP 10: Evaluate on held-out test set
   # -------------------------------------------------------------------
   print("[main] Step 10 — Evaluating model on test set...")  # TODO: replace with logging later
-  # DOMINIQUE, PENGCHONG, and MATTEO: Your individual models will need this function and will take 
-  # the fitted model from Step 8, the X_test and y_test dataframes, and the problem type as input. 
-  # You will return a single metric value (float) that represents the model's performance on the 
-  # test set. The metric you choose should be appropriate for your problem type 
-  # (e.g. RMSE for regression, F1 score for classification).
-  metric_value = evaluate_model(
-      model=model,
-      X_test=X_test,
-      y_test=y_test,
-      problem_type=SETTINGS["problem_type"],
-  )
+#   metric_value = evaluate_model(
+#       model=model,
+#       X_test=X_test,
+#       y_test=y_test,
+#       problem_type=SETTINGS["problem_type"],
+#   )
+  metric_value = evaluate_kmeans_model(model=model,X_test=X_test)
   metric_label = "RMSE" if SETTINGS["problem_type"] == "regression" else "F1 (weighted)"
   print(f"[main]   {metric_label}: {metric_value:.4f}")  # TODO: replace with logging later
 
@@ -277,16 +257,13 @@ def main():
   # STEP 11: Run inference on example data (first 5 rows of test set)
   # -------------------------------------------------------------------
   print("[main] Step 11 — Running inference on example rows...")  # TODO: replace with logging later
-  # DOMINIQUE, PENGCHONG, and MATTEO: Your individual models will need this function and will take the fitted model 
-  # from Step 8 and a dataframe of input features (X_infer) as input.
   X_example = X_test.head(5)
-  predictions_df = run_inference(model=model, X_infer=X_example)
+  predictions_df = run_kmeans_inference(model=model, X_infer=X_example)
 
   # -------------------------------------------------------------------
   # STEP 12: Save predictions artifact
   # -------------------------------------------------------------------
   print("[main] Step 12 — Saving predictions CSV...")  # TODO: replace with logging later
-  # For VIKRAM
   save_csv(predictions_df, SETTINGS["predictions_path"])
 
   print("\n[main] Pipeline complete!")  # TODO: replace with logging later
