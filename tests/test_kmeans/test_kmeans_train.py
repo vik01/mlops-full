@@ -13,11 +13,15 @@ def build_dummy_preprocessor():
     """
     Build a minimal ColumnTransformer compatible with train_kmeans_model.
     """
+    try:
+        ohe = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+    except TypeError:
+        ohe = OneHotEncoder(handle_unknown="ignore", sparse=False)
     return ColumnTransformer(
         transformers=[
             (
                 "cat",
-                OneHotEncoder(handle_unknown="ignore", sparse=False),
+                ohe,
                 ["cat_feature"],
             ),
             ("num", "passthrough", ["num_feature"]),

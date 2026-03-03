@@ -13,11 +13,15 @@ def build_dummy_preprocessor():
     """
     Minimal preprocessor compatible with KMeans pipeline.
     """
+    try:
+        ohe = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+    except TypeError:
+        ohe = OneHotEncoder(handle_unknown="ignore", sparse=False)
     return ColumnTransformer(
         transformers=[
             (
                 "cat",
-                OneHotEncoder(handle_unknown="ignore", sparse=False),
+                ohe,
                 ["cat_feature"],
             ),
             ("num", "passthrough", ["num_feature"]),
