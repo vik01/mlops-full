@@ -1,54 +1,69 @@
 import pytest
 import numpy as np
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.datasets import make_classification
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
+import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import confusion_matrix
+from src.dtrees.dtrees_train import train_model
+from src.dtrees.dtrees_eval import evaluate_model, calculate_metrics
 
 
 @pytest.fixture
-def eval_data():
-    X, y = make_classification(
-        n_samples=500, n_features=10, n_informative=5, random_state=42
-    )
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
-    model = DecisionTreeClassifier(random_state=42)
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    return y_test, y_pred
+def eval_setup():
+    np.random.seed(42)
+    X = pd.DataFrame({
+        "age": np.random.randint(30, 80, 300),
+        "bp":  np.random.randint(60, 140, 300),
+    })
+    y = pd.Series(np.random.choice(["Presence", "Absence"], size=300))
+    preprocessor = ColumnTransformer([
+        ("scaler", StandardScaler(), ["age", "bp"])
+    ])
+    split = 240
+    X_train, X_test = X.iloc[:split], X.iloc[split:]
+    y_train, y_test = y.iloc[:split], y.iloc[split:]
+    model = train_model(X_train, y_train, preprocessor, "classification")
+    return model, X_test, y_test
 
 
-def test_accuracy_above_threshold(eval_data):
-    """Model accuracy should be above a minimum acceptable threshold."""
-    y_test, y_pred = eval_data
-    acc = accuracy_score(y_test, y_pred)
-    assert acc >= 0.75, f"Accuracy {acc:.2f} is below the 0.75 threshold"
+def test_evaluate_model_returns_float(eval_setup):
+    """evaluate_model should return a single float."""
+    model, X_test, y_test = eval_setup
+    result = evaluate_model(model, X_test, y_test, "classification")
+    assert isinstance(result, float)
 
 
-def test_f1_score_above_threshold(eval_data):
-    """F1 score should be above a minimum acceptable threshold."""
-    y_test, y_pred = eval_data
-    f1 = f1_score(y_test, y_pred, average="weighted")
-    assert f1 >= 0.75, f"F1 score {f1:.2f} is below the 0.75 threshold"
+def test_evaluate_model_f1_between_0_and_1(eval_setup):
+    """Returned F1 score should be between 0 and 1."""
+    model, X_test, y_test = eval_setup
+    result = evaluate_model(model, X_test, y_test, "classification")
+    assert 0.0 <= result <= 1.0
 
 
-def test_confusion_matrix_shape(eval_data):
-    """Confusion matrix should be square with size equal to number of classes."""
-    y_test, y_pred = eval_data
-    cm = confusion_matrix(y_test, y_pred)
-    n_classes = len(np.unique(y_test))
-    assert cm.shape == (n_classes, n_classes)
+def test_calculate_metrics_returns_all_keys():
+    """calculate_metrics should return all expected metric keys."""
+    y_true = pd.Series(["Presence", "Absence", "Presence", "Absence"])
+    y_pred = np.array(["Presence", "Absence", "Absence", "Absence"])
+    cm = confusion_matrix(y_true, y_pred, labels=["Absence", "Presence"])
+    metrics = calculate_metrics(cm, y_true, y_pred)
+    expected_keys = {"TP", "TN", "FP", "FN", "Accuracy", "Precision",
+                     "Recall", "Specificity", "F1-score", "False Positive Rate"}
+    assert expected_keys == set(metrics.keys())
 
 
-def test_no_nan_in_predictions(eval_data):
-    """Predictions should not contain NaN values."""
-    _, y_pred = eval_data
-    assert not np.any(np.isnan(y_pred))
+def test_calculate_metrics_accuracy_range():
+    """Accuracy returned by calculate_metrics should be between 0 and 1."""
+    y_true = pd.Series(["Presence", "Absence", "Presence", "Absence"])
+    y_pred = np.array(["Presence", "Presence", "Presence", "Absence"])
+    cm = confusion_matrix(y_true, y_pred, labels=["Absence", "Presence"])
+    metrics = calculate_metrics(cm, y_true, y_pred)
+    assert 0.0 <= metrics["Accuracy"] <= 1.0
 
 
-def test_predictions_match_expected_length(eval_data):
-    """Number of predictions should match number of test samples."""
-    y_test, y_pred = eval_data
-    assert len(y_pred) == len(y_test)
+def test_evaluate_model_raises_on_bad_input(eval_setup):
+    """evaluate_model should raise RuntimeError with incompatible input."""
+    model, _, y_test = eval_setup
+    bad_X = pd.DataFrame({"wrong": [1, 2, 3]})
+    bad_y = y_test.iloc[:3]
+    with pytest.raises(RuntimeError):
+        evaluate_model(model, bad_X, bad_y, "classification")
