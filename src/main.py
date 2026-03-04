@@ -33,9 +33,20 @@ from src.validate import validate_dataframe
 from src.features import get_feature_preprocessor
 
 # Get kmeans functions
-from kmeans.evaluate import evaluate_kmeans_model
-from kmeans.infer import run_kmeans_inference
-from kmeans.train import train_kmeans_model
+from kmeans.kmeans_evaluate import evaluate_kmeans_model
+from kmeans.kmeans_infer import run_kmeans_inference
+from kmeans.kmeans_train import train_kmeans_model
+
+# Get logitic regression functions
+from logit_regression.logit_train import train_logit_model
+from logit_regression.logit_evaluate import evaluate_logit_model
+from logit_regression.logit_infer import run_logit_inference
+
+# Get decision tree functions
+from dtrees.dtrees_train import train_dtrees_model
+from dtrees.dtrees_eval import evaluate_dtrees_model, calculate_metrics
+from dtrees.dtrees_infer import run_dtrees_inference
+
 
 from src.utils import save_csv, save_model
 

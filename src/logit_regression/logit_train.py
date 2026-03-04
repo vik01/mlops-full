@@ -13,7 +13,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, LogisticRegression
 
 
-def train_model(X_train: pd.DataFrame, y_train: pd.Series, preprocessor, problem_type: str):
+def train_logit_model(X_train: pd.DataFrame, y_train: pd.Series, preprocessor, problem_type: str):
     """
     Inputs:
     - X_train: training features dataframe

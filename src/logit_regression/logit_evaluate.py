@@ -12,7 +12,7 @@ import pandas as pd
 from sklearn.metrics import mean_squared_error, f1_score
 
 
-def evaluate_model(model, X_test: pd.DataFrame, y_test: pd.Series, problem_type: str) -> float:
+def evaluate_logit_model(model, X_test: pd.DataFrame, y_test: pd.Series, problem_type: str) -> float:
     """
     Inputs:
     - model: fitted sklearn Pipeline

@@ -11,7 +11,7 @@ TODO: Any temporary or hardcoded variable or parameter will be imported from con
 import pandas as pd
 
 
-def run_inference(model, X_infer: pd.DataFrame) -> pd.DataFrame:
+def run_logit_inference(model, X_infer: pd.DataFrame) -> pd.DataFrame:
     """
     Inputs:
     - model: fitted sklearn Pipeline (includes preprocessing + estimator)

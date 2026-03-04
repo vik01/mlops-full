@@ -63,7 +63,7 @@ def calculate_metrics(cm, y_true, y_pred):
     }
 
 
-def evaluate_model(model, X_test, y_test, problem_type):
+def evaluate_dtrees_model(model, X_test, y_test, problem_type):
     """
     Inputs:
     - model: Fitted sklearn Pipeline from dtrees_train.train_model.

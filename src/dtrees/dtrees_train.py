@@ -22,7 +22,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 
 
-def train_model(X_train, y_train, preprocessor, problem_type):
+def train_dtrees_model(X_train, y_train, preprocessor, problem_type):
     """
     Inputs:
     - X_train: Feature matrix for training (pandas DataFrame).

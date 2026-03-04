@@ -21,7 +21,7 @@ TODO: Any temporary or hardcoded variable or parameter will be imported from con
 import pandas as pd
 
 
-def run_inference(model, X_infer):
+def run_dtrees_inference(model, X_infer):
     """
     Inputs:
     - model: Fitted sklearn Pipeline from dtrees_train.train_model.
