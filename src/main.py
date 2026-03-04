@@ -33,9 +33,9 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from src.load_data import load_raw_data
-# from src.clean_data import clean_dataframe
-from src.validate import validate_dataframe
-from src.features import get_feature_preprocessor
+from src.clean_data import clean_dataframe
+from validate import validate_dataframe
+from features import get_feature_preprocessor
 
 # Get kmeans functions
 from kmeans.kmeans_evaluate import evaluate_kmeans_model
@@ -74,7 +74,7 @@ SETTINGS = {
         "numeric_passthrough": ["id", "Sex", "FBS over 120",
                                 "EKG results", "Exercise angina"],
         "ordinal_encode": ["Chest pain type", "Number of vessels fluro",
-                            "Thallium", "Slope of ST"],
+                           "Thallium", "Slope of ST"],
         "min_max_scaler": ["Age", "BP", "Cholesterol", "Max HR"],
         "n_bins": 5
     }
@@ -133,7 +133,7 @@ def main():
     # ALESSANDRO: You for your clean_dataframe() function. You need to take in
     # the raw dataframe and target column name (string).
     # df_clean= clean_dataframe(df_raw,target_column=SETTINGS["target_column"])
-    df_clean = pd.DataFrame()
+    df_clean = clean_dataframe(df_raw, target_column=SETTINGS["target_column"])
 
     # -------------------------------------------------------------------
     # STEP 3: Save processed CSV
@@ -174,7 +174,11 @@ def main():
                 stratify=stratify_arg,
             )
         except ValueError as e:
-            print(f"[main] Stratified split failed ({e}). Falling back to random split.")  # TODO: replace with logging later
+            print(
+                f"[main] Stratified split failed ({e}). "
+                "Falling back to random split."
+            )
+            # TODO: replace with logging later
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y,
                 test_size=SETTINGS["test_size"],
@@ -187,7 +191,8 @@ def main():
             random_state=SETTINGS["random_state"],
         )
 
-    print(f"[main]   Train size: {len(X_train)} rows | Test size: {len(X_test)} rows")  # TODO: replace with logging later
+    print(f"[main]Train size:{len(X_train)} rows|Test size:{len(X_test)} rows")
+    # TODO: replace with logging later
 
     # -------------------------------------------------------------------
     # STEP 6: Fail-fast feature checks
@@ -202,17 +207,20 @@ def main():
     missing_cols = [c for c in all_feature_cols if c not in X_train.columns]
     if missing_cols:
         raise ValueError(
-            f"[main] The following configured feature columns are missing from the data: {missing_cols}\n"
-            "Update the 'features' section in SETTINGS to match your actual column names."
-        )
+                    f"[main] The following configured feature columns are "
+                    f"missing from the data: {missing_cols}\n"
+                    "Update the 'features' section in SETTINGS to match "
+                    "your actual column names."
+                )
 
     # Check that quantile_bin columns are numeric
     for col in SETTINGS["features"]["quantile_bin"]:
         if not pd.api.types.is_numeric_dtype(X_train[col]):
             raise TypeError(
-                f"[main] Column '{col}' is listed under 'quantile_bin' but is not numeric. "
-                "Only numeric columns can be binned."
-            )
+                    f"[main] Column '{col}' is listed under "
+                    "'quantile_bin' but is not numeric. "
+                    "Only numeric columns can be binned."
+                )
     # -------------------------------------------------------------------
     # STEP 7: Build feature preprocessor (ColumnTransformer recipe only —
     #          no fitting here, fitting happens inside train_model)
