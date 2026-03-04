@@ -22,7 +22,8 @@ def evaluate_kmeans_model(model, X_test: pd.DataFrame) -> float:
     - Provides a quantitative signal of clustering quality.
     """
 
-    print("[kmeans.evaluate] Evaluating silhouette score")  # TODO: replace with logging later
+    # TODO: replace with logging later
+    print("[kmeans.evaluate] Evaluating silhouette score")
 
     X_trans = model.named_steps["preprocess"].transform(X_test)
     labels = model.named_steps["model"].predict(X_trans)
