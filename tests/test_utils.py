@@ -2,15 +2,10 @@
 Tests for src/utils.py — load_csv and save_csv
 Run with: pytest tests/test_utils.py
 """
-
-import sys
 from pathlib import Path
 
 import pytest
 import pandas as pd
-
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-
 from utils import load_csv, save_csv
 
 

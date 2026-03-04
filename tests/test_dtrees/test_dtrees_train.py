@@ -60,7 +60,8 @@ def test_trained_model_respects_max_depth(sample_data, preprocessor):
 
 def test_pipeline_raises_on_bad_data(preprocessor):
     """train_model should raise RuntimeError if fitting fails."""
-    X_bad = pd.DataFrame({"age": ["not", "a", "number"], "bp": ["x", "y", "z"]})
+    X_bad = pd.DataFrame({"age": ["not", "a", "number"],
+                          "bp": ["x", "y", "z"]})
     y_bad = pd.Series(["Presence", "Absence", "Presence"])
     with pytest.raises(RuntimeError):
         train_dtrees_model(X_bad, y_bad, preprocessor, "classification")

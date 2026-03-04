@@ -1,5 +1,4 @@
 import pandas as pd
-import pytest
 
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder

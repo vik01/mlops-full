@@ -22,7 +22,11 @@ def eval_setup():
     split = 240
     X_train, X_test = X.iloc[:split], X.iloc[split:]
     y_train, y_test = y.iloc[:split], y.iloc[split:]
-    model = train_dtrees_model(X_train, y_train, preprocessor, "classification")
+    model = train_dtrees_model(
+        X_train,
+        y_train,
+        preprocessor,
+        "classification")
     return model, X_test, y_test
 
 
@@ -47,7 +51,8 @@ def test_calculate_metrics_returns_all_keys():
     cm = confusion_matrix(y_true, y_pred, labels=["Absence", "Presence"])
     metrics = calculate_metrics(cm, y_true, y_pred)
     expected_keys = {"TP", "TN", "FP", "FN", "Accuracy", "Precision",
-                     "Recall", "Specificity", "F1-score", "False Positive Rate"}
+                     "Recall", "Specificity", "F1-score",
+                     "False Positive Rate"}
     assert expected_keys == set(metrics.keys())
 
 
