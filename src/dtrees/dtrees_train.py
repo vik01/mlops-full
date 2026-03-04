@@ -35,7 +35,8 @@ def train_dtrees_model(X_train, y_train, preprocessor, problem_type):
     - Wrapping preprocessor and estimator in one Pipeline ensures the same
       transformations at training, evaluation, and inference — no leakage.
     """
-    print("[dtrees_train.train_model] Building Decision Tree pipeline...")  # TODO: replace with logging later
+    print("[dtrees_train.train_model] Building Decision Tree pipeline...")
+    # TODO: replace with logging later
 
     # max_depth=4 and min_samples_leaf=30 from notebook Section 6.1.
     # These values balance interpretability and accuracy (~85%).
@@ -50,7 +51,8 @@ def train_dtrees_model(X_train, y_train, preprocessor, problem_type):
         ("model", estimator),
     ])
 
-    print(f"[dtrees_train.train_model] Fitting on {len(X_train)} samples...")  # TODO: replace with logging later
+    print(f"[dtrees_train.train_model] Fitting on {len(X_train)} samples...")
+    # TODO: replace with logging later
 
     try:
         pipeline.fit(X_train, y_train)
@@ -59,7 +61,8 @@ def train_dtrees_model(X_train, y_train, preprocessor, problem_type):
             f"[dtrees_train.train_model] Pipeline fitting failed: {exc}"
         ) from exc
 
-    print("[dtrees_train.train_model] Training complete.")  # TODO: replace with logging later
+    print("[dtrees_train.train_model] Training complete.")
+    # TODO: replace with logging later
 
     # --------------------------------------------------------
     # START STUDENT CODE
@@ -74,7 +77,8 @@ def train_dtrees_model(X_train, y_train, preprocessor, problem_type):
     # 2. Try min_samples_split or different random_state.
     #
     # Optional forcing function (leave commented)
-    # raise NotImplementedError("Student: You must implement this logic to proceed!")
+    # raise NotImplementedError("Student: You must implement this logic to
+    # proceed!")
     # --------------------------------------------------------
     # END STUDENT CODE
     # --------------------------------------------------------

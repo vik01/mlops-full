@@ -2,8 +2,8 @@ import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 
-from src.logit_regression.logit_train import train_model
-from src.logit_regression.logit_evaluate import evaluate_model
+from logit_regression.logit_train import train_logit_model
+from logit_regression.logit_evaluate import evaluate_logit_model
 
 
 def _make_preprocessor():
@@ -38,14 +38,14 @@ def test_evaluate_model_returns_float_classification():
     X, y = _make_dummy_classification_data()
     preprocessor = _make_preprocessor()
 
-    model = train_model(
+    model = train_logit_model(
         X_train=X,
         y_train=y,
         preprocessor=preprocessor,
         problem_type="classification",
     )
 
-    metric_value = evaluate_model(
+    metric_value = evaluate_logit_model(
         model=model,
         X_test=X,
         y_test=y,
