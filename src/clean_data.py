@@ -38,29 +38,8 @@ def clean_dataframe(df_raw: pd.DataFrame, target_column: str) -> pd.DataFrame:
     # We still accept `target_column` to match the pipeline contract used in main.py.
     df_clean = df_raw.copy(deep=True)
 
-    # Light-touch, generic safety (non-dataset-specific):
-    # - Drop rows that are entirely empty (commonly safe and rarely controversial)
-    # NOTE: If your dataset relies on empty rows as meaningful records, remove this.
     df_clean = df_clean.dropna(how="all")
-
-    # --------------------------------------------------------
-    # START STUDENT CODE
-    # --------------------------------------------------------
-    # TODO_STUDENT: Paste your notebook logic here to replace or extend the baseline
-    # Why: Cleaning rules vary per dataset (missing value policy, outliers, label encoding, filtering).
-    # Examples:
-    # 1. Handle missing values (drop, impute, or domain-specific defaults)
-    # 2. Fix data types (parse dates, convert numerics, normalize text categories)
-    # 3. Remove duplicates / impossible values using business rules
-    #
-    # Optional forcing function (leave commented)
-    # raise NotImplementedError("Student: You must implement this logic to proceed!")
-    #
-    # Placeholder (Remove this after implementing your code):
-    print("Warning: Student has not implemented this section yet")
-    # --------------------------------------------------------
-    # END STUDENT CODE
-    # --------------------------------------------------------
+    df_clean = df_clean.drop_duplicates()
 
     # Minimal contract visibility: ensure we didn't accidentally drop the target silently.
     # We do NOT fail here (validate.py is the place for fail-fast required columns),
