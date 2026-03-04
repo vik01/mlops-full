@@ -31,7 +31,7 @@ def train_logit_model(
     Outputs:
     - fitted sklearn Pipeline(preprocess -> model)
     Why this contract matters for reliable ML delivery:
-    - Putting preprocessing + model in one Pipeline prevents training/serving ç
+    - Putting preprocessing + model in one Pipeline prevents training/serving
     skew and reduces leakage risk.
     """
     print("train_model: fitting model Pipeline (preprocess -> estimator)")

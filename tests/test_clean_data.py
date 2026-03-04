@@ -16,27 +16,11 @@ from clean_data import clean_dataframe
 
 def test_raises_if_df_raw_is_none():
     with pytest.raises(ValueError):
-        clean_dataframe(None, target_column="Heart Disease")"""
+        clean_dataframe(None, target_column="Heart Disease")
+        """
 Tests for src/clean_data.py
 Run with: pytest tests/test_clean_data.py
 """
-
-import sys
-from pathlib import Path
-
-import pandas as pd
-import pytest
-
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-
-from clean_data import clean_dataframe
-
-
-def test_raises_if_df_raw_is_none():
-    with pytest.raises(ValueError):
-        clean_dataframe(None, target_column="Heart Disease")
-
-
 def test_drops_all_null_rows():
     df_raw = pd.DataFrame(
         {

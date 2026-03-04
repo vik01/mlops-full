@@ -8,14 +8,16 @@ Output: DataFrame with a single column "prediction", preserving input index.
 Educational Goal:
 - Why this module exists in an MLOps system:
     Inference is a separate concern from training and evaluation. In production
-    this function is what gets called by an API endpoint for real-time predictions.
+    this function is what gets called by an API endpoint for real-time
+    predictions.
 - Responsibility (separation of concerns): Only generate predictions.
     No training, no metrics, no file saving.
 - Pipeline contract (inputs and outputs): Input is any DataFrame with the same
     feature columns used during training. Output is a single-column DataFrame.
 
 TODO: Replace print statements with standard library logging in a later session
-TODO: Any temporary or hardcoded variable or parameter will be imported from config.yml in a later session
+TODO: Any temporary or hardcoded variable or parameter will be imported from
+config.yml in a later session
 """
 
 import pandas as pd
@@ -25,14 +27,18 @@ def run_dtrees_inference(model, X_infer):
     """
     Inputs:
     - model: Fitted sklearn Pipeline from dtrees_train.train_model.
-    - X_infer: Feature matrix for new patients (pandas DataFrame, no target column).
+    - X_infer: Feature matrix for new patients (pandas DataFrame, no target
+    column).
     Outputs:
-    - predictions_df: DataFrame with one column "prediction", same index as X_infer.
+    - predictions_df: DataFrame with one column "prediction", same index as
+    X_infer.
     Why this contract matters for reliable ML delivery:
     - Preserving the input index means predictions can be joined back to the
       original patient records without ambiguity.
     """
-    print(f"[dtrees_infer.run_inference] Running inference on {len(X_infer)} rows...")  # TODO: replace with logging later
+    print(
+        f"Running inference on {len(X_infer)} rows...")
+    # TODO: replace with logging later
 
     try:
         predictions = model.predict(X_infer)
@@ -46,7 +52,8 @@ def run_dtrees_inference(model, X_infer):
         index=X_infer.index,
     )
 
-    print("[dtrees_infer.run_inference] Inference complete.")  # TODO: replace with logging later
+    print("[dtrees_infer.run_inference] Inference complete.")
+    # TODO: replace with logging later
 
     # --------------------------------------------------------
     # START STUDENT CODE
@@ -61,7 +68,8 @@ def run_dtrees_inference(model, X_infer):
     # 2. Map labels to plain English for a clinical report.
     #
     # Optional forcing function (leave commented)
-    # raise NotImplementedError("Student: You must implement this logic to proceed!")
+    # raise NotImplementedError("Student: You must implement this logic to
+    # proceed!")
     # --------------------------------------------------------
     # END STUDENT CODE
     # --------------------------------------------------------
