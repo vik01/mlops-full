@@ -34,23 +34,23 @@ from sklearn.model_selection import train_test_split
 
 from src.load_data import load_raw_data
 from src.clean_data import clean_dataframe
-from validate import validate_dataframe
-from features import get_feature_preprocessor
+from src.validate import validate_dataframe
+from src.features import get_feature_preprocessor
 
 # Get kmeans functions
-from kmeans.kmeans_evaluate import evaluate_kmeans_model
-from kmeans.kmeans_infer import run_kmeans_inference
-from kmeans.kmeans_train import train_kmeans_model
+from src.kmeans.kmeans_evaluate import evaluate_kmeans_model
+from src.kmeans.kmeans_infer import run_kmeans_inference
+from src.kmeans.kmeans_train import train_kmeans_model
 
 # Get logitic regression functions
-from logit_regression.logit_train import train_logit_model
-from logit_regression.logit_evaluate import evaluate_logit_model
-from logit_regression.logit_infer import run_logit_inference
+from src.logit_regression.logit_train import train_logit_model
+from src.logit_regression.logit_evaluate import evaluate_logit_model
+from src.logit_regression.logit_infer import run_logit_inference
 
 # Get decision tree functions
-from dtrees.dtrees_train import train_dtrees_model
-from dtrees.dtrees_eval import evaluate_dtrees_model
-from dtrees.dtrees_infer import run_dtrees_inference
+from src.dtrees.dtrees_train import train_dtrees_model
+from src.dtrees.dtrees_eval import evaluate_dtrees_model
+from src.dtrees.dtrees_infer import run_dtrees_inference
 
 
 from src.utils import save_csv, save_model
@@ -62,21 +62,25 @@ SETTINGS = {
     "is_example_config": False,
     "raw_data_path":       Path("data/raw/train.csv"),
     "processed_data_path": Path("data/processed/clean.csv"),
-    "model_path":          Path("models/model.joblib"),
+    "kmeans_model_path":   Path("models/kmeans_model.joblib"),
+    "logit_model_path":    Path("models/logit_model.joblib"),
+    "dtrees_model_path":    Path("models/dtrees_model.joblib"),
     "predictions_path":    Path("reports/predictions.csv"),
     "target_column": "Heart Disease",
     "problem_type": "classification",
     "test_size":    0.2,
     "random_state": 42,
+    "k_means_bins": 3,
     "features": {
-        "quantile_bin":        ["ST depression"],
+        "quantile_bin":        [],
         "categorical_onehot":  [],
         "numeric_passthrough": ["id", "Sex", "FBS over 120",
-                                "EKG results", "Exercise angina"],
+                                "EKG results", "Exercise angina",
+                                "ST depression"],
         "ordinal_encode": ["Chest pain type", "Number of vessels fluro",
                            "Thallium", "Slope of ST"],
         "min_max_scaler": ["Age", "BP", "Cholesterol", "Max HR"],
-        "n_bins": 5
+        "n_bins": 3
     }
 }
 
@@ -221,6 +225,7 @@ def main():
                     "'quantile_bin' but is not numeric. "
                     "Only numeric columns can be binned."
                 )
+
     # -------------------------------------------------------------------
     # STEP 7: Build feature preprocessor (ColumnTransformer recipe only —
     #          no fitting here, fitting happens inside train_model)
@@ -233,28 +238,6 @@ def main():
         numeric_passthrough_cols=SETTINGS["features"]["numeric_passthrough"],
         n_bins=SETTINGS["features"]["n_bins"],
     )
-
-    # --------------------------------------------------------
-    # START STUDENT CODE
-    # --------------------------------------------------------
-    # TODO_STUDENT: Customise the SETTINGS dictionary above and the
-    #               feature lists to match your real dataset columns.
-    # Why: Every dataset has different column names, dtypes, and split
-    #      strategies. This is where your domain knowledge drives the config.
-    # Examples:
-    # 1. Change "target_column" to the name of your label column.
-    # 2. Move columns between quantile_bin, categorical_onehot, and
-    #    numeric_passthrough depending on their type and cardinality.
-    #
-    # Optional forcing function (leave commented)
-    # raise NotImplementedError("Student: You must implement this logic to
-    # proceed!")
-    #
-    # Placeholder (Remove this after implementing your code):
-    print("Warning: Student has not implemented this section yet")
-    # --------------------------------------------------------
-    # END STUDENT CODE
-    # --------------------------------------------------------
 
     # -------------------------------------------------------------------
     # STEP 8: Train model (Pipeline: preprocess + estimator, fit on train)
@@ -269,7 +252,7 @@ def main():
     #   )
     kmeans_model = train_kmeans_model(X_train=X_train,
                                       preprocessor=preprocessor,
-                                      n_clusters=SETTINGS["n_bins"])
+                                      n_clusters=SETTINGS["k_means_bins"])
 
     # dtrees train model
     dtrees_model = train_dtrees_model(X_train=X_train, y_train=y_train,
@@ -286,12 +269,11 @@ def main():
     # -------------------------------------------------------------------
     print("[main] Step 9 — Saving model artifact...")
     # TODO: replace with logging later
-    save_model(kmeans_model, SETTINGS["model_path"])
-    save_model(dtrees_model, SETTINGS["model_path"].replace("kmeans",
-                                                            "dtrees"))
+    save_model(kmeans_model, SETTINGS["kmeans_model_path"])
+    save_model(dtrees_model, SETTINGS["dtrees_model_path"])
     # the .replace for if in SETTINGS["model_path"] we have "kmeans" as a
     # placeholder, it will be replaced with "logit" for the logit model
-    save_model(logit_model, SETTINGS["model_path"].replace("kmeans", "logit"))
+    save_model(logit_model, SETTINGS["logit_model_path"])
 
     # -------------------------------------------------------------------
     # STEP 10: Evaluate on held-out test set
@@ -315,13 +297,15 @@ def main():
 
     # Evaluate dtrees model
     dtrees_metrics = evaluate_dtrees_model(model=dtrees_model, X_test=X_test,
-                                           y_test=y_test)
+                                           y_test=y_test,
+                                           prob_type=SETTINGS['problem_type'])
     print(f"[main] Decision Tree Metrics {metric_label}: {dtrees_metrics}")
     # TODO: replace with logging later
 
     # Evaluate logit model
     logit_metrics = evaluate_logit_model(model=logit_model, X_test=X_test,
-                                         y_test=y_test)
+                                         y_test=y_test,
+                                         prob_type=SETTINGS['problem_type'])
     print(f"[main] Logistic Regression Metrics{metric_label}: {logit_metrics}")
 
     # -------------------------------------------------------------------
@@ -358,9 +342,9 @@ def main():
 
     print("\n[main] Pipeline complete!")  # TODO: replace with logging later
     print(f"  Processed data : {SETTINGS['processed_data_path']}")
-    print(f"  Model artifact : {SETTINGS['model_path']}")
+    print(f"  Model artifact : {SETTINGS['logit_model_path']}")
     print(f"  Predictions    : {SETTINGS['predictions_path']}")
 
-    if __name__ == "__main__":
-        print("Pipeline not implemented yet. HAhaahh")
-        # main()
+
+if __name__ == "__main__":
+    main()

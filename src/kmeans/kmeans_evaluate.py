@@ -8,10 +8,11 @@ TODO: Replace print statements with standard library logging in a later session
 """
 
 import pandas as pd
+from sklearn.pipeline import Pipeline
 from sklearn.metrics import silhouette_score
 
 
-def evaluate_kmeans_model(model, X_test: pd.DataFrame) -> float:
+def evaluate_kmeans_model(model: Pipeline, X_test: pd.DataFrame) -> float:
     """
     Inputs:
     - model: Fitted Pipeline(preprocess + KMeans).

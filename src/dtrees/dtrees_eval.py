@@ -64,7 +64,7 @@ def calculate_metrics(cm, y_true, y_pred):
     }
 
 
-def evaluate_dtrees_model(model, X_test, y_test, problem_type):
+def evaluate_dtrees_model(model, X_test, y_test, prob_type):
     """
     Inputs:
     - model: Fitted sklearn Pipeline from dtrees_train.train_model.
@@ -79,6 +79,13 @@ def evaluate_dtrees_model(model, X_test, y_test, problem_type):
     """
     print("[dtrees_eval.evaluate_model] Running predictions on test set...")
     # TODO: replace with logging later
+
+    if prob_type not in ["regression", "classification"]:
+        msg = (
+            'evaluate_model: problem_type must be '
+            '"regression" or "classification"'
+        )
+        raise ValueError(msg)
 
     try:
         y_pred = model.predict(X_test)
