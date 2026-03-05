@@ -8,7 +8,8 @@
 
 ## 1. Getting Started
 
-Follow these steps to set up the project environment locally.
+Follow these steps to set up the project environment locally. This assumes you
+already have installed python and pip.
 
 ### 1.1 Create a Python virtual environment
 
@@ -41,7 +42,7 @@ pip install -r requirements.txt
 
 To verify the installation:
 ```bash
-python -c "import pandas, numpy, sklearn, matplotlib, seaborn; print('All packages installed successfully!')"
+python -c "import pandas, numpy, sklearn, matplotlib, seaborn, pytest; print('All packages installed successfully!')"
 ```
 
 ### 1.4 Deactivate when done

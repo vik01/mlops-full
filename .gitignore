@@ -16,6 +16,13 @@ venv/
 dist/
 build/
 
+# Test, split, and processed data (if/when added)
+data/
+data/inference/
+data/processed/
+data/splits/
+data/raw/
+
 # OS and IDE
 .DS_Store
 .vscode/
@@ -33,3 +40,6 @@ data/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 !data/inference/.gitkeep
+
+# pyright
+pyrightconfig.json
