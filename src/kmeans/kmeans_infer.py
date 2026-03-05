@@ -1,10 +1,13 @@
 """
 Educational Goal:
-- Why this module exists in an MLOps system: Standardize cluster assignment.
+- Why this module exists in an MLOps system: Standardize cluster
+  assignment.
 - Responsibility (separation of concerns): Predict cluster_id.
-- Pipeline contract (inputs and outputs): model + X -> DataFrame with one column 'prediction'.
+- Pipeline contract (inputs and outputs): model + X -> DataFrame with
+  one column 'prediction'.
 
-TODO: Replace print statements with standard library logging in a later session
+TODO: Replace print statements with standard library logging in a
+later session
 """
 
 import pandas as pd

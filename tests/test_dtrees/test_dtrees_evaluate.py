@@ -4,8 +4,8 @@ import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix
-from src.dtrees.dtrees_train import train_model
-from src.dtrees.dtrees_eval import evaluate_model, calculate_metrics
+from dtrees.dtrees_train import train_dtrees_model
+from dtrees.dtrees_eval import evaluate_dtrees_model, calculate_metrics
 
 
 @pytest.fixture
@@ -22,21 +22,25 @@ def eval_setup():
     split = 240
     X_train, X_test = X.iloc[:split], X.iloc[split:]
     y_train, y_test = y.iloc[:split], y.iloc[split:]
-    model = train_model(X_train, y_train, preprocessor, "classification")
+    model = train_dtrees_model(
+        X_train,
+        y_train,
+        preprocessor,
+        "classification")
     return model, X_test, y_test
 
 
 def test_evaluate_model_returns_float(eval_setup):
     """evaluate_model should return a single float."""
     model, X_test, y_test = eval_setup
-    result = evaluate_model(model, X_test, y_test, "classification")
+    result = evaluate_dtrees_model(model, X_test, y_test, "classification")
     assert isinstance(result, float)
 
 
 def test_evaluate_model_f1_between_0_and_1(eval_setup):
     """Returned F1 score should be between 0 and 1."""
     model, X_test, y_test = eval_setup
-    result = evaluate_model(model, X_test, y_test, "classification")
+    result = evaluate_dtrees_model(model, X_test, y_test, "classification")
     assert 0.0 <= result <= 1.0
 
 
@@ -47,7 +51,8 @@ def test_calculate_metrics_returns_all_keys():
     cm = confusion_matrix(y_true, y_pred, labels=["Absence", "Presence"])
     metrics = calculate_metrics(cm, y_true, y_pred)
     expected_keys = {"TP", "TN", "FP", "FN", "Accuracy", "Precision",
-                     "Recall", "Specificity", "F1-score", "False Positive Rate"}
+                     "Recall", "Specificity", "F1-score",
+                     "False Positive Rate"}
     assert expected_keys == set(metrics.keys())
 
 
@@ -66,4 +71,4 @@ def test_evaluate_model_raises_on_bad_input(eval_setup):
     bad_X = pd.DataFrame({"wrong": [1, 2, 3]})
     bad_y = y_test.iloc[:3]
     with pytest.raises(RuntimeError):
-        evaluate_model(model, bad_X, bad_y, "classification")
+        evaluate_dtrees_model(model, bad_X, bad_y, "classification")

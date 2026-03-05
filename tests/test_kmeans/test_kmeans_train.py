@@ -6,7 +6,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import Pipeline
 
-from kmeans.train import train_kmeans_model
+from kmeans.kmeans_train import train_kmeans_model
 
 
 def build_dummy_preprocessor():

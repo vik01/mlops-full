@@ -3,14 +3,9 @@ Tests for src/validate.py
 Run with: pytest tests/test_validate.py
 """
 
-import sys
 from pathlib import Path
-
-import pytest
 import pandas as pd
-
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-
+import pytest
 from validate import validate_dataframe
 
 
@@ -36,7 +31,8 @@ REQUIRED_COLUMNS = [
 
 @pytest.fixture(scope="module")
 def mock_df():
-    """Load mock CSV once per module and drop the id column (simulates post-cleaning state)."""
+    """Load mock CSV once per module and drop the id column
+    (simulates post-cleaning state)."""
     df = pd.read_csv(MOCK_DATA_PATH)
     df = df.drop(columns=["id"])
     return df

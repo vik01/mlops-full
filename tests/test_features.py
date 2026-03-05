@@ -5,11 +5,8 @@ Run with: pytest tests/test_features.py
 
 import sys
 from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-
 from features import get_feature_preprocessor
-
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 # ===========================================================================
 # INDIVIDUAL FEATURE TESTS
@@ -18,12 +15,13 @@ from features import get_feature_preprocessor
 #   - the name at index 0 of that tuple is correct
 # ===========================================================================
 
+
 # ------------------------------------------------------------------
 # quantile_bin: single column → one transformer named "quantile_bin"
 # ------------------------------------------------------------------
 def test_single_quantile_bin():
     preprocessor = get_feature_preprocessor(quantile_bin_cols=["col"])
-    transformers = preprocessor.transformers # type: ignore
+    transformers = preprocessor.transformers  # type: ignore
     assert len(transformers) == 1
     assert transformers[0][0] == "quantile_bin"
 
@@ -33,7 +31,7 @@ def test_single_quantile_bin():
 # ------------------------------------------------------------------
 def test_single_onehot():
     preprocessor = get_feature_preprocessor(categorical_onehot_cols=["col"])
-    transformers = preprocessor.transformers # type: ignore
+    transformers = preprocessor.transformers  # type: ignore
     assert len(transformers) == 1
     assert transformers[0][0] == "onehot"
 
@@ -43,7 +41,7 @@ def test_single_onehot():
 # ------------------------------------------------------------------
 def test_single_passthrough():
     preprocessor = get_feature_preprocessor(numeric_passthrough_cols=["col"])
-    transformers = preprocessor.transformers # type: ignore
+    transformers = preprocessor.transformers  # type: ignore
     assert len(transformers) == 1
     assert transformers[0][0] == "passthrough"
 
@@ -53,7 +51,7 @@ def test_single_passthrough():
 # ------------------------------------------------------------------
 def test_single_scaler():
     preprocessor = get_feature_preprocessor(min_max_cols=["col"])
-    transformers = preprocessor.transformers # type: ignore
+    transformers = preprocessor.transformers  # type: ignore
     assert len(transformers) == 1
     assert transformers[0][0] == "scaler"
 
@@ -63,7 +61,7 @@ def test_single_scaler():
 # ------------------------------------------------------------------
 def test_single_ordinal():
     preprocessor = get_feature_preprocessor(ordinal_encode_cols=["col"])
-    transformers = preprocessor.transformers # type: ignore
+    transformers = preprocessor.transformers  # type: ignore
     assert len(transformers) == 1
     assert transformers[0][0] == "ordinal"
 
@@ -78,12 +76,14 @@ def test_settings_feature_config():
     preprocessor = get_feature_preprocessor(
         quantile_bin_cols=["ST depression"],
         categorical_onehot_cols=[],
-        numeric_passthrough_cols=["id", "Sex", "FBS over 120", "EKG results", "Exercise angina"],
+        numeric_passthrough_cols=["id", "Sex", "FBS over 120", "EKG results",
+                                  "Exercise angina"],
         min_max_cols=["Age", "BP", "Cholesterol", "Max HR"],
-        ordinal_encode_cols=["Chest pain type", "Number of vessels fluro", "Thallium", "Slope of ST"],
+        ordinal_encode_cols=["Chest pain type", "Number of vessels fluro",
+                             "Thallium", "Slope of ST"],
         n_bins=5,
     )
-    transformers = preprocessor.transformers # type: ignore
+    transformers = preprocessor.transformers  # type: ignore
     assert len(transformers) == 4
     assert transformers[0][0] == "quantile_bin"
     assert transformers[1][0] == "passthrough"

@@ -2,7 +2,7 @@ import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 
-from src.logit_regression.logit_train import train_model
+from logit_regression.logit_train import train_logit_model
 
 
 def _make_preprocessor():
@@ -39,7 +39,7 @@ def test_train_model_returns_fitted_pipeline_classification():
     X_train, y_train = _make_dummy_classification_data()
     preprocessor = _make_preprocessor()
 
-    model = train_model(
+    model = train_logit_model(
         X_train=X_train,
         y_train=y_train,
         preprocessor=preprocessor,

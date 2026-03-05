@@ -1,12 +1,11 @@
 import pandas as pd
-import pytest
 
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.cluster import KMeans
 
-from kmeans.evaluate import evaluate_kmeans_model
+from kmeans.kmeans_evaluate import evaluate_kmeans_model
 
 
 def build_dummy_preprocessor():

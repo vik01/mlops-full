@@ -6,7 +6,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.cluster import KMeans
 
-from kmeans.infer import run_kmeans_inference
+from kmeans.kmeans_infer import run_kmeans_inference
 
 
 def build_dummy_preprocessor():
