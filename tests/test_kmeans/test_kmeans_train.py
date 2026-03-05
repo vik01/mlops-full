@@ -95,3 +95,34 @@ def test_invalid_cluster_number():
             preprocessor=preprocessor,
             n_clusters=0,  # invalid
         )
+
+
+# ---- Input validation tests ----
+
+def test_X_train_not_dataframe():
+    """Passing a non-DataFrame X_train should raise TypeError."""
+    preprocessor = build_dummy_preprocessor()
+    with pytest.raises(TypeError, match="X_train must be a pandas DataFrame"):
+        train_kmeans_model([[1, 2]], preprocessor, 2)
+
+
+def test_X_train_empty():
+    """Passing an empty DataFrame should raise ValueError."""
+    preprocessor = build_dummy_preprocessor()
+    with pytest.raises(ValueError, match="X_train must not be empty"):
+        train_kmeans_model(pd.DataFrame(), preprocessor, 2)
+
+
+def test_preprocessor_not_column_transformer():
+    """Passing a non-ColumnTransformer preprocessor should raise TypeError."""
+    df = build_dummy_dataframe()
+    with pytest.raises(TypeError, match="preprocessor must be a ColumnTransformer"):
+        train_kmeans_model(df, "not_a_transformer", 2)
+
+
+def test_n_clusters_not_int():
+    """Passing a non-int n_clusters should raise TypeError."""
+    df = build_dummy_dataframe()
+    preprocessor = build_dummy_preprocessor()
+    with pytest.raises(TypeError, match="n_clusters must be an int"):
+        train_kmeans_model(df, preprocessor, 2.5)

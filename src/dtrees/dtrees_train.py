@@ -20,11 +20,16 @@ TODO: Any temporary or hardcoded variable or parameter will be imported from
 config.yml in a later session
 """
 
+import pandas as pd
+from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 
 
-def train_dtrees_model(X_train, y_train, preprocessor, problem_type):
+def train_dtrees_model(X_train: pd.DataFrame,
+                       y_train: pd.Series,
+                       preprocessor: ColumnTransformer,
+                       problem_type: str):
     """
     Inputs:
     - X_train: Feature matrix for training (pandas DataFrame).
@@ -33,12 +38,28 @@ def train_dtrees_model(X_train, y_train, preprocessor, problem_type):
     - problem_type: "classification" or "regression" (str).
     Outputs:
     - pipeline: Fitted sklearn Pipeline (preprocessor + DecisionTreeClassifier)
-    Why this contract matters for reliable ML delivery:
-    - Wrapping preprocessor and estimator in one Pipeline ensures the same
-      transformations at training, evaluation, and inference — no leakage.
     """
+    if not isinstance(X_train, pd.DataFrame):
+        raise TypeError("X_train must be a pandas DataFrame")
+    if X_train.empty:
+        raise ValueError("X_train must not be empty")
+    if not isinstance(y_train, pd.Series):
+        raise TypeError("y_train must be a pandas Series")
+    if y_train.empty:
+        raise ValueError("y_train must not be empty")
+    if not isinstance(preprocessor, ColumnTransformer):
+        raise TypeError("preprocessor must be a ColumnTransformer")
+    if not isinstance(problem_type, str):
+        raise TypeError("problem_type must be a string")
+
     print("[dtrees_train.train_model] Building Decision Tree pipeline...")
     # TODO: replace with logging later
+
+    if problem_type not in ["regression", "classification"]:
+        raise ValueError(
+            "train_model: problem_type must be "
+            "regression or classification"
+        )
 
     # max_depth=4 and min_samples_leaf=30 from notebook Section 6.1.
     # These values balance interpretability and accuracy (~85%).
@@ -65,24 +86,5 @@ def train_dtrees_model(X_train, y_train, preprocessor, problem_type):
 
     print("[dtrees_train.train_model] Training complete.")
     # TODO: replace with logging later
-
-    # --------------------------------------------------------
-    # START STUDENT CODE
-    # --------------------------------------------------------
-    # TODO_STUDENT: Replace or extend the baseline estimator above.
-    # Why: Baseline uses fixed hyperparameters from the notebook.
-    #      You may want to tune max_depth or add GridSearchCV later.
-    # Examples:
-    # 1. from sklearn.model_selection import GridSearchCV
-    #    param_grid = {"model__max_depth": [3, 4, 5]}
-    #    pipeline = GridSearchCV(pipeline, param_grid, cv=5)
-    # 2. Try min_samples_split or different random_state.
-    #
-    # Optional forcing function (leave commented)
-    # raise NotImplementedError("Student: You must implement this logic to
-    # proceed!")
-    # --------------------------------------------------------
-    # END STUDENT CODE
-    # --------------------------------------------------------
 
     return pipeline

@@ -56,6 +56,7 @@ SETTINGS = {
     "test_size":    0.2,
     "random_state": 42,
     "k_means_bins": 3,
+    "max_iterations": 2000,
     "features": {
         "quantile_bin":        [],
         "categorical_onehot":  [],
@@ -224,12 +225,13 @@ def main():
     # dtrees train model
     dtrees_model = train_dtrees_model(X_train=X_train, y_train=y_train,
                                       preprocessor=preprocessor,
-                                      problem_type=SETTINGS["problem_type"])
+                                      problem_type=SETTINGS["problem_type"],)
 
     # logit train model
-    logit_model = train_logit_model(X_train=X_train, y_train=y_train,
-                                    preprocessor=preprocessor,
-                                    problem_type=SETTINGS["problem_type"])
+    logit_model = train_logit_model(X_train, y_train, preprocessor,
+                                    SETTINGS["problem_type"],
+                                    SETTINGS["random_state"],
+                                    SETTINGS["max_iterations"])
 
     # -------------------------------------------------------------------
     # STEP 9: Save trained model artifact
@@ -288,14 +290,14 @@ def main():
     # -------------------------------------------------------------------
     print("[main] Step 12 — Saving predictions CSV...")
     # TODO: replace with logging later
-    save_csv(kmeans_predictions_df, SETTINGS["kmeans_redictions_path"])
+    save_csv(kmeans_predictions_df, SETTINGS["kmeans_predictions_path"])
     save_csv(dtrees_predictions_df, SETTINGS["dtrees_predictions_path"])
     save_csv(logit_predictions_df, SETTINGS["logit_predictions_path"])
 
     print("\n[main] Pipeline complete!")  # TODO: replace with logging later
     print(f"  Processed data : {SETTINGS['processed_data_path']}")
     print(f"  Model artifact : {SETTINGS['logit_model_path']}")
-    print(f"  Predictions    : {SETTINGS['kmeans_redictions_path']}")
+    print(f"  Predictions    : {SETTINGS['kmeans_predictions_path']}")
 
 
 if __name__ == "__main__":
