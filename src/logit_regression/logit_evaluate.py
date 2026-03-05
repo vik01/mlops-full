@@ -18,7 +18,7 @@ from sklearn.metrics import mean_squared_error, f1_score
 
 
 def evaluate_logit_model(
-    model, X_test: pd.DataFrame, y_test: pd.Series, problem_type: str
+    model, X_test: pd.DataFrame, y_test: pd.Series, prob_type: str
 ) -> float:
     """
     Inputs:
@@ -35,7 +35,7 @@ def evaluate_logit_model(
     print("evaluate_model: evaluating model on held-out test set")
     # TODO: logging later
 
-    if problem_type not in ["regression", "classification"]:
+    if prob_type not in ["regression", "classification"]:
         msg = (
             'evaluate_model: problem_type must be '
             '"regression" or "classification"'
@@ -44,7 +44,7 @@ def evaluate_logit_model(
 
     y_pred = model.predict(X_test)
 
-    if problem_type == "regression":
+    if prob_type == "regression":
         metric_value = float(mean_squared_error(y_test, y_pred, squared=False))
     else:
         metric_value = float(f1_score(y_test, y_pred, average="weighted"))

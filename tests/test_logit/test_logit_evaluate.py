@@ -49,7 +49,7 @@ def test_evaluate_model_returns_float_classification():
         model=model,
         X_test=X,
         y_test=y,
-        problem_type="classification",
+        prob_type="classification",
     )
 
     assert isinstance(metric_value, float)

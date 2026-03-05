@@ -65,3 +65,49 @@ def test_pipeline_raises_on_bad_data(preprocessor):
     y_bad = pd.Series(["Presence", "Absence", "Presence"])
     with pytest.raises(RuntimeError):
         train_dtrees_model(X_bad, y_bad, preprocessor, "classification")
+
+
+# ---- Input validation tests ----
+
+def test_X_train_not_dataframe(sample_data, preprocessor):
+    """Passing a non-DataFrame X_train should raise TypeError."""
+    _, y = sample_data
+    with pytest.raises(TypeError, match="X_train must be a pandas DataFrame"):
+        train_dtrees_model([[1, 2], [3, 4]], y, preprocessor, "classification")
+
+
+def test_X_train_empty(sample_data, preprocessor):
+    """Passing an empty DataFrame should raise ValueError."""
+    _, y = sample_data
+    X_empty = pd.DataFrame()
+    with pytest.raises(ValueError, match="X_train must not be empty"):
+        train_dtrees_model(X_empty, y, preprocessor, "classification")
+
+
+def test_y_train_not_series(sample_data, preprocessor):
+    """Passing a non-Series y_train should raise TypeError."""
+    X, _ = sample_data
+    with pytest.raises(TypeError, match="y_train must be a pandas Series"):
+        train_dtrees_model(X, [0, 1, 0], preprocessor, "classification")
+
+
+def test_y_train_empty(sample_data, preprocessor):
+    """Passing an empty Series should raise ValueError."""
+    X, _ = sample_data
+    y_empty = pd.Series(dtype=float)
+    with pytest.raises(ValueError, match="y_train must not be empty"):
+        train_dtrees_model(X, y_empty, preprocessor, "classification")
+
+
+def test_preprocessor_not_column_transformer(sample_data):
+    """Passing a non-ColumnTransformer preprocessor should raise TypeError."""
+    X, y = sample_data
+    with pytest.raises(TypeError, match="preprocessor must be a ColumnTransformer"):
+        train_dtrees_model(X, y, "not_a_transformer", "classification")
+
+
+def test_problem_type_not_string(sample_data, preprocessor):
+    """Passing a non-string problem_type should raise TypeError."""
+    X, y = sample_data
+    with pytest.raises(TypeError, match="problem_type must be a string"):
+        train_dtrees_model(X, y, preprocessor, 123)

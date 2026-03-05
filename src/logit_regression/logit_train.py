@@ -13,6 +13,7 @@ config.yml in a later session
 """
 
 import pandas as pd
+from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, LogisticRegression
 
@@ -20,8 +21,10 @@ from sklearn.linear_model import Ridge, LogisticRegression
 def train_logit_model(
         X_train: pd.DataFrame,
         y_train: pd.Series,
-        preprocessor,
-        problem_type: str):
+        preprocessor: ColumnTransformer,
+        problem_type: str,
+        random_state: int = 42,
+        max_iterations: int = 500):
     """
     Inputs:
     - X_train: training features dataframe
@@ -30,11 +33,26 @@ def train_logit_model(
     - problem_type: "regression" or "classification"
     Outputs:
     - fitted sklearn Pipeline(preprocess -> model)
-    Why this contract matters for reliable ML delivery:
-    - Putting preprocessing + model in one Pipeline prevents training/serving
-    skew and reduces leakage risk.
     """
-    print("train_model: fitting model Pipeline (preprocess -> estimator)")
+    if not isinstance(X_train, pd.DataFrame):
+        raise TypeError("X_train must be a pandas DataFrame")
+    if X_train.empty:
+        raise ValueError("X_train must not be empty")
+    if not isinstance(y_train, pd.Series):
+        raise TypeError("y_train must be a pandas Series")
+    if y_train.empty:
+        raise ValueError("y_train must not be empty")
+    if not isinstance(preprocessor, ColumnTransformer):
+        raise TypeError("preprocessor must be a ColumnTransformer")
+    if not isinstance(problem_type, str):
+        raise TypeError("problem_type must be a string")
+    if not isinstance(random_state, int):
+        raise TypeError("random_state must be an int")
+    if not isinstance(max_iterations, int):
+        raise TypeError("max_iterations must be an int")
+
+    print("""[logit_train.logit_train]  Fitting model Pipeline
+          (preprocess -> estimator)""")
     # TODO: replace with logging later
 
     if problem_type not in ["regression", "classification"]:
@@ -46,7 +64,8 @@ def train_logit_model(
     estimator = (
         Ridge()
         if problem_type == "regression"
-        else LogisticRegression(max_iter=500)
+        else LogisticRegression(random_state=random_state,
+                                max_iter=max_iterations)
     )
 
     # --------------------------------------------------------
@@ -76,5 +95,11 @@ def train_logit_model(
         ]
     )
 
-    model.fit(X_train, y_train)
+    try:
+        model.fit(X_train, y_train)
+    except Exception as exc:
+        raise RuntimeError(
+            f"[logit_train.logit_train] Pipeline fitting failed: {exc}"
+        ) from exc
+
     return model

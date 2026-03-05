@@ -8,10 +8,11 @@ TODO: Replace print statements with standard library logging in a later session
 """
 
 import pandas as pd
+from sklearn.pipeline import Pipeline
 from sklearn.metrics import silhouette_score
 
 
-def evaluate_kmeans_model(model, X_test: pd.DataFrame) -> float:
+def evaluate_kmeans_model(model: Pipeline, X_test: pd.DataFrame) -> float:
     """
     Inputs:
     - model: Fitted Pipeline(preprocess + KMeans).
@@ -36,25 +37,20 @@ def evaluate_kmeans_model(model, X_test: pd.DataFrame) -> float:
     # ============================================================
     # FULL SILHOUETTE (exact calculation, no sampling)
     # ============================================================
-    score = float(silhouette_score(X_trans, labels))
+    # score = float(silhouette_score(X_trans, labels))
 
     # ============================================================
     # OPTIONAL: SAMPLE-BASED SILHOUETTE (for large datasets)
-    # Uncomment if computation becomes too slow.
-    # ============================================================
-    #
-    # score = float(
-    #     silhouette_score(
-    #         X_trans,
-    #         labels,
-    #         sample_size=min(1000, len(X_trans)),
-    #         random_state=42
-    #     )
-    # )
-    #
-    # Why sampling:
     # Silhouette has O(n^2) complexity.
     # For large datasets, sampling provides a scalable approximation.
-    #
+    # ============================================================
+    score = float(
+        silhouette_score(
+            X_trans,
+            labels,
+            sample_size=min(1000, len(X_trans)),
+            random_state=42
+        )
+    )
 
     return score
