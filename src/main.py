@@ -5,20 +5,6 @@ Role: Orchestrate the entire flow
         (Load -> Clean -> Validate -> Train -> Evaluate).
 Usage: python -m src.main
 
-Educational Goal:
-- Why this module exists in an MLOps system:
-    main.py is the top-level orchestrator.
-    It wires together every stage of the pipeline in one readable, linear
-    script soany team member can understand the full flow at a glance.
-- Responsibility (separation of concerns):
-    main.py owns ONLY the order-of-operations
-    and configuration. It delegates all real work to the src sub-modules.
-    Think of it as a table of contents for your pipeline.
-- Pipeline contract (inputs and outputs):
-    Inputs : raw CSV path defined in SETTINGS
-    Outputs: data/processed/clean.csv, models/model.joblib,
-    reports/predictions.csv
-
 TODO: Replace print statements with standard library logging in a later session
 TODO: Any temporary or hardcoded variable or parameter will be imported from
     config.yml in a later session
@@ -36,6 +22,7 @@ from src.load_data import load_raw_data
 from src.clean_data import clean_dataframe
 from src.validate import validate_dataframe
 from src.features import get_feature_preprocessor
+from src.utils import save_csv, save_model
 
 # Get kmeans functions
 from src.kmeans.kmeans_evaluate import evaluate_kmeans_model
@@ -52,20 +39,18 @@ from src.dtrees.dtrees_train import train_dtrees_model
 from src.dtrees.dtrees_eval import evaluate_dtrees_model
 from src.dtrees.dtrees_infer import run_dtrees_inference
 
-
-from src.utils import save_csv, save_model
-
 # ===========================================================================
 # 2. CONFIGURATION  —  SETTINGS BRIDGE
 # ===========================================================================
 SETTINGS = {
-    "is_example_config": False,
     "raw_data_path":       Path("data/raw/train.csv"),
     "processed_data_path": Path("data/processed/clean.csv"),
     "kmeans_model_path":   Path("models/kmeans_model.joblib"),
     "logit_model_path":    Path("models/logit_model.joblib"),
     "dtrees_model_path":    Path("models/dtrees_model.joblib"),
-    "predictions_path":    Path("reports/predictions.csv"),
+    "kmeans_predictions_path":    Path("reports/kmeans_predictions.csv"),
+    "logit_predictions_path":    Path("reports/logit_predictions.csv"),
+    "dtrees_predictions_path":    Path("reports/dtrees_predictions.csv"),
     "target_column": "Heart Disease",
     "problem_type": "classification",
     "test_size":    0.2,
@@ -84,11 +69,10 @@ SETTINGS = {
     }
 }
 
+
 # ===========================================================================
 # 3. MAIN PIPELINE
 # ===========================================================================
-
-
 def main():
     """
     Inputs:
@@ -97,10 +81,6 @@ def main():
     - data/processed/clean.csv   — cleaned dataset written to disk
     - models/model.joblib        — trained sklearn Pipeline written to disk
     - reports/predictions.csv   — inference output written to disk
-    Why this contract matters for reliable ML delivery:
-    - A single entry point means any engineer can reproduce the full pipeline
-    with one command, reducing 'works on my machine' failures and enabling
-    CI/CD automation.
     """
     # -------------------------------------------------------------------
     # STEP 0: Ensure output directories exist
@@ -111,22 +91,11 @@ def main():
     Path("models").mkdir(parents=True, exist_ok=True)
     Path("reports").mkdir(parents=True, exist_ok=True)
 
-    if SETTINGS["is_example_config"]:
-        print(  # TODO: replace with logging later
-            "\n" + "=" * 70 + "\n"
-            "WARNING: is_example_config is True.\n"
-            "You are running with DUMMY settings and a generated sample CSV.\n"
-            "Update SETTINGS in src/main.py before using real data!\n"
-            + "=" * 70 + "\n"
-        )
-
     # -------------------------------------------------------------------
     # STEP 1: Load raw data
     # -------------------------------------------------------------------
     print("[main] Step 1 — Loading raw data...")
     # TODO: replace with logging later
-    # TERESA: You for your load_raw_data() function.
-    # You need to take in a Path Object.
     df_raw = load_raw_data(SETTINGS["raw_data_path"])
 
     # -------------------------------------------------------------------
@@ -134,9 +103,6 @@ def main():
     # -------------------------------------------------------------------
     print("[main] Step 2 — Cleaning data...")
     # TODO: replace with logging later
-    # ALESSANDRO: You for your clean_dataframe() function. You need to take in
-    # the raw dataframe and target column name (string).
-    # df_clean= clean_dataframe(df_raw,target_column=SETTINGS["target_column"])
     df_clean = clean_dataframe(df_raw, target_column=SETTINGS["target_column"])
 
     # -------------------------------------------------------------------
@@ -155,6 +121,8 @@ def main():
         SETTINGS["features"]["quantile_bin"]
         + SETTINGS["features"]["categorical_onehot"]
         + SETTINGS["features"]["numeric_passthrough"]
+        + SETTINGS["features"]["ordinal_encode"]
+        + SETTINGS["features"]["min_max_scaler"]
         + [SETTINGS["target_column"]]
     )
     validate_dataframe(df_clean, required_columns=required_cols)
@@ -207,6 +175,8 @@ def main():
         SETTINGS["features"]["quantile_bin"]
         + SETTINGS["features"]["categorical_onehot"]
         + SETTINGS["features"]["numeric_passthrough"]
+        + SETTINGS["features"]["ordinal_encode"]
+        + SETTINGS["features"]["min_max_scaler"]
     )
     missing_cols = [c for c in all_feature_cols if c not in X_train.columns]
     if missing_cols:
@@ -235,7 +205,10 @@ def main():
     preprocessor = get_feature_preprocessor(
         quantile_bin_cols=SETTINGS["features"]["quantile_bin"],
         categorical_onehot_cols=SETTINGS["features"]["categorical_onehot"],
+        min_max_cols=SETTINGS["features"]["min_max_scaler"],
+        ordinal_encode_cols=SETTINGS["features"]["ordinal_encode"],
         numeric_passthrough_cols=SETTINGS["features"]["numeric_passthrough"],
+
         n_bins=SETTINGS["features"]["n_bins"],
     )
 
@@ -244,12 +217,6 @@ def main():
     # -------------------------------------------------------------------
     print("[main] Step 8 — Training model...")
     # TODO: replace with logging later
-    #   model = train_kmeans_model(
-    #       X_train=X_train,
-    #       y_train=y_train,
-    #       preprocessor=preprocessor,
-    #       problem_type=SETTINGS["problem_type"],
-    #   )
     kmeans_model = train_kmeans_model(X_train=X_train,
                                       preprocessor=preprocessor,
                                       n_clusters=SETTINGS["k_means_bins"])
@@ -271,8 +238,6 @@ def main():
     # TODO: replace with logging later
     save_model(kmeans_model, SETTINGS["kmeans_model_path"])
     save_model(dtrees_model, SETTINGS["dtrees_model_path"])
-    # the .replace for if in SETTINGS["model_path"] we have "kmeans" as a
-    # placeholder, it will be replaced with "logit" for the logit model
     save_model(logit_model, SETTINGS["logit_model_path"])
 
     # -------------------------------------------------------------------
@@ -280,12 +245,6 @@ def main():
     # -------------------------------------------------------------------
     print("[main] Step 10 — Evaluating model on test set...")
     # TODO: replace with logging later
-    #   metric_value = evaluate_model(
-    #       model=model,
-    #       X_test=X_test,
-    #       y_test=y_test,
-    #       problem_type=SETTINGS["problem_type"],
-    #   )
 
     # Evaluate kmeans model
     kmeans_metric_value = evaluate_kmeans_model(model=kmeans_model,
@@ -329,21 +288,14 @@ def main():
     # -------------------------------------------------------------------
     print("[main] Step 12 — Saving predictions CSV...")
     # TODO: replace with logging later
-    save_csv(kmeans_predictions_df, SETTINGS["predictions_path"])
-    save_csv(dtrees_predictions_df,
-             SETTINGS["predictions_path"].replace("predictions",
-                                                  "dtrees_predictions"))
-    # the .replace for if in SETTINGS["predictions_path"] we have "predictions"
-    # as a placeholder, it will be replaced with "logit_predictions" for the
-    # logit predictions
-    save_csv(logit_predictions_df,
-             SETTINGS["predictions_path"].replace("predictions",
-                                                  "logit_predictions"))
+    save_csv(kmeans_predictions_df, SETTINGS["kmeans_redictions_path"])
+    save_csv(dtrees_predictions_df, SETTINGS["dtrees_predictions_path"])
+    save_csv(logit_predictions_df, SETTINGS["logit_predictions_path"])
 
     print("\n[main] Pipeline complete!")  # TODO: replace with logging later
     print(f"  Processed data : {SETTINGS['processed_data_path']}")
     print(f"  Model artifact : {SETTINGS['logit_model_path']}")
-    print(f"  Predictions    : {SETTINGS['predictions_path']}")
+    print(f"  Predictions    : {SETTINGS['kmeans_redictions_path']}")
 
 
 if __name__ == "__main__":
