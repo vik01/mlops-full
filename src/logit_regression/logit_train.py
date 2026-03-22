@@ -62,31 +62,11 @@ def train_logit_model(
         )
 
     estimator = (
-        Ridge()
+        Ridge(solver='auto', random_state=random_state)
         if problem_type == "regression"
         else LogisticRegression(random_state=random_state,
                                 max_iter=max_iterations)
     )
-
-    # --------------------------------------------------------
-    # START STUDENT CODE
-    # --------------------------------------------------------
-    # TODO_STUDENT: Paste your notebook logic here to replace or extend
-    # Why: Hyperparameters depend on dataset size, imbalance, and business
-    # goals.
-    # Examples:
-    # 1. LogisticRegression(class_weight="balanced")
-    # 2. LogisticRegression(C=0.5, solver="liblinear")
-    #
-    # Optional forcing function (leave commented)
-    # raise NotImplementedError("Student: You must implement this logic to
-    # proceed!")
-    #
-    # Placeholder (Remove this after implementing your code):
-    print("Warning: Student has not implemented this section yet")
-    # --------------------------------------------------------
-    # END STUDENT CODE
-    # --------------------------------------------------------
 
     model = Pipeline(
         steps=[

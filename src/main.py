@@ -283,7 +283,8 @@ def main():
                                                  X_infer=X_example)
     # Logit inference example
     logit_predictions_df = run_logit_inference(model=logit_model,
-                                               X_infer=X_example)
+                                               X_infer=X_example,
+                                               optimal_threshold=logit_metrics["optimal_threshold"])
 
     # -------------------------------------------------------------------
     # STEP 12: Save predictions artifact
