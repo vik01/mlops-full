@@ -3,11 +3,11 @@ TODO: Any temporary or hardcoded variable or parameter will be imported from
       config.yml in a later session
 """
 
+# Standard Library Imports
 import logging
 from typing import Optional, List
 
-logger = logging.getLogger(__name__)
-
+# Third-party Imports
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import (
     KBinsDiscretizer,
@@ -15,6 +15,8 @@ from sklearn.preprocessing import (
     MinMaxScaler,
     OrdinalEncoder,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def get_feature_preprocessor(

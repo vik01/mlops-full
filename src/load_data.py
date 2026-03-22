@@ -3,13 +3,17 @@ TODO: Any temporary or hardcoded variable or parameter will be imported
       from config.yml in a later session
 """
 
+# Standard Library Imports
 import logging
 from pathlib import Path
+
+# Third-party Imports
 import pandas as pd
 
-logger = logging.getLogger(__name__)
-
+# Local Module Imports
 from utils import load_csv
+
+logger = logging.getLogger(__name__)
 
 
 def load_raw_data(raw_data_path: Path) -> pd.DataFrame:

@@ -6,13 +6,16 @@ Educational Goal:
 
 """
 
+# Standard Library Imports
 import logging
-import pandas as pd
 
-logger = logging.getLogger(__name__)
+# Third-party Imports
+import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.cluster import KMeans
+
+logger = logging.getLogger(__name__)
 
 
 def train_kmeans_model(X_train: pd.DataFrame,

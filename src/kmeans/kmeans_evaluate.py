@@ -6,12 +6,15 @@ Educational Goal:
 
 """
 
+# Standard Library Imports
 import logging
-import pandas as pd
 
-logger = logging.getLogger(__name__)
+# Third-party Imports
+import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import silhouette_score
+
+logger = logging.getLogger(__name__)
 
 
 def evaluate_kmeans_model(model: Pipeline, X_test: pd.DataFrame) -> float:

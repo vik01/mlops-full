@@ -11,11 +11,11 @@ TODO: Any temporary or hardcoded variable or parameter will be imported
 from config.yml in a later session
 """
 
+# Standard Library Imports
 import logging
 import os
 
-logger = logging.getLogger(__name__)
-
+# Third-party Imports
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -26,6 +26,8 @@ from sklearn.metrics import (
     roc_curve, roc_auc_score, confusion_matrix,
     accuracy_score, precision_score, recall_score, f1_score,
 )
+
+logger = logging.getLogger(__name__)
 
 
 _INFERENCE_DIR = os.path.join("data", "inference")

@@ -8,7 +8,10 @@ Educational Goal:
 
 """
 
+# Standard Library Imports
 import logging
+
+# Third-party Imports
 import pandas as pd
 
 logger = logging.getLogger(__name__)

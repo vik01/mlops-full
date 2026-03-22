@@ -11,13 +11,16 @@ TODO: Any temporary or hardcoded variable or parameter will be imported from
 config.yml in a later session
 """
 
+# Standard Library Imports
 import logging
-import pandas as pd
 
-logger = logging.getLogger(__name__)
+# Third-party Imports
+import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, LogisticRegression
+
+logger = logging.getLogger(__name__)
 
 
 def train_logit_model(

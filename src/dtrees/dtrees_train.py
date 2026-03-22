@@ -19,13 +19,16 @@ TODO: Any temporary or hardcoded variable or parameter will be imported from
 config.yml in a later session
 """
 
+# Standard Library Imports
 import logging
-import pandas as pd
 
-logger = logging.getLogger(__name__)
+# Third-party Imports
+import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
+
+logger = logging.getLogger(__name__)
 
 
 def train_dtrees_model(X_train: pd.DataFrame,
