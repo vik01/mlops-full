@@ -8,13 +8,21 @@ paths:
   logit_predictions: "reports/logit_predictions.csv"
   dtrees_predictions: "reports/dtrees_predictions.csv"
   log_file: "logs/pipeline.log"
+  inference_data: "data/inference"
 
 logging:
   level: "INFO"
 
+validation:
+  max_null_rate: 0.1
+  binary_columns: ["Sex", "FBS over 120", "Exercise angina"]
+  age_min: 0
+  age_max: 120
+
 problem:
   target_column: "Heart Disease"
   problem_type: "classification"
+  valid_targets: ["Presence", "Absence"]
 
 split:
   test_size: 0.2

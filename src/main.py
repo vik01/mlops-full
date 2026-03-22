@@ -15,12 +15,10 @@ TODO: Any temporary or hardcoded variable or parameter will be imported from
 # Standard Library Imports
 from pathlib import Path
 import logging
-from typing import Any, Dict, List, Optional
 
 # Third-party Imports
 import pandas as pd
 from sklearn.model_selection import train_test_split
-import yaml
 
 # Local Module Imports
 from logger import configure_logging
@@ -28,7 +26,12 @@ from load_data import load_raw_data
 from clean_data import clean_dataframe
 from validate import validate_dataframe
 from features import get_feature_preprocessor
+
+# Utils imports
 from utils import save_csv, save_model
+from utils import load_config, require_section, require_str 
+from utils import require_float, require_int, require_list
+from utils import resolve_repo_path, normalize_problem_type
 
 # Get kmeans functions
 from kmeans.kmeans_evaluate import evaluate_kmeans_model
@@ -47,133 +50,13 @@ from dtrees.dtrees_infer import run_dtrees_inference
 
 logger = logging.getLogger(__name__)
 
-
-def load_config(config_path: Path) -> Dict[str, Any]:
-    """
-    Load YAML configuration from disk
-
-    Why this exists
-    - Centralizing config loading prevents "config drift" where different modules parse YAML differently
-    - Fail fast with clear messages when config.yaml is missing or malformed
-    """
-    if not config_path.exists():
-        raise FileNotFoundError(f"Config file not found at: {config_path}")
-
-    with config_path.open("r", encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
-
-    if not isinstance(cfg, dict):
-        raise ValueError(
-            "config.yaml must parse into a dictionary at the top level")
-
-    return cfg
-
-
-def require_section(cfg: Dict[str, Any], section: str) -> Dict[str, Any]:
-    """
-    Enforce a required top-level config section
-
-    Why this exists
-    - This produces an actionable error tied to config.yaml structure
-    """
-    value = cfg.get(section)
-    if not isinstance(value, dict):
-        raise ValueError(
-            f"config.yaml must contain a top-level '{section}' mapping")
-    return value
-
-
-def require_str(section: Dict[str, Any], key: str) -> str:
-    value = section.get(key)
-    if not isinstance(value, str) or not value.strip():
-        raise ValueError(f"config.yaml: '{key}' must be a non-empty string")
-    return value.strip()
-
-
-def require_float(section: Dict[str, Any], key: str) -> float:
-    value = section.get(key)
-    try:
-        return float(value)
-    except Exception as e:
-        raise ValueError(
-            f"config.yaml: '{key}' must be a number. Got '{value}'") from e
-    
-
-def require_int(section: Dict[str, Any], key: str) -> int:
-    value = section.get(key)
-    try:
-        return int(value)
-    except Exception as e:
-        raise ValueError(
-            f"config.yaml: '{key}' must be an integer. Got '{value}'") from e
-
-
-def require_list(section: Dict[str, Any], key: str) -> List[str]:
-    value = section.get(key)
-    if value is None:
-        return []
-    if not isinstance(value, list):
-        raise ValueError(
-            f"config.yaml: '{key}' must be a list. Got type={type(value)}")
-    out: List[str] = []
-    for item in value:
-        if isinstance(item, str) and item.strip():
-            out.append(item.strip())
-    return out
-
-
-def normalize_problem_type(problem_type: Optional[str]) -> str:
-    return (problem_type or "").strip().lower()
-
-def resolve_repo_path(project_root: Path, relative_path: str) -> Path:
-    """
-    Resolve a config path relative to the repo root
-
-    This makes the repo reproducible across machines because we never rely on the current working directory
-    """
-    if not isinstance(relative_path, str) or not relative_path.strip():
-        raise ValueError("config.yaml: path values must be non-empty strings")
-    return project_root / relative_path.strip()
-
 # ===========================================================================
-# 2. CONFIGURATION  —  SETTINGS BRIDGE
-# ===========================================================================
-SETTINGS = {
-    "raw_data_path":       Path("data/raw/train.csv"),
-    "processed_data_path": Path("data/processed/clean.csv"),
-    "kmeans_model_path":   Path("models/kmeans_model.joblib"),
-    "logit_model_path":    Path("models/logit_model.joblib"),
-    "dtrees_model_path":    Path("models/dtrees_model.joblib"),
-    "kmeans_predictions_path":    Path("reports/kmeans_predictions.csv"),
-    "logit_predictions_path":    Path("reports/logit_predictions.csv"),
-    "dtrees_predictions_path":    Path("reports/dtrees_predictions.csv"),
-    "target_column": "Heart Disease",
-    "problem_type": "classification",
-    "test_size":    0.2,
-    "random_state": 42,
-    "k_means_bins": 3,
-    "max_iterations": 2000,
-    "features": {
-        "quantile_bin":        [],
-        "categorical_onehot":  [],
-        "numeric_passthrough": ["id", "Sex", "FBS over 120",
-                                "EKG results", "Exercise angina",
-                                "ST depression"],
-        "ordinal_encode": ["Chest pain type", "Number of vessels fluro",
-                           "Thallium", "Slope of ST"],
-        "min_max_scaler": ["Age", "BP", "Cholesterol", "Max HR"],
-        "n_bins": 3
-    }
-}
-
-
-# ===========================================================================
-# 3. MAIN PIPELINE
+# 2. MAIN PIPELINE
 # ===========================================================================
 def main():
     """
     Inputs:
-    - SETTINGS dictionary defined at module level (acts as config bridge)
+    -  Config.yaml file for configuration of model settings
     Outputs:
     - data/processed/clean.csv   — cleaned dataset written to disk
     - models/model.joblib        — trained sklearn Pipeline written to disk
@@ -186,87 +69,100 @@ def main():
     # -----------------------------
     cfg = load_config(project_root / "config.yaml")
 
+    # Load required sections from config file
     paths_cfg = require_section(cfg, "paths")
     problem_cfg = require_section(cfg, "problem")
     split_cfg = require_section(cfg, "split")
     features_cfg = require_section(cfg, "features")
-    # validation_cfg = require_section(cfg, "validation")
-    # run_cfg = require_section(cfg, "run")
     training_cfg = require_section(cfg, "training")
     logging_cfg = require_section(cfg, "logging")
 
-    log_file_path = resolve_repo_path(
-        project_root, require_str(paths_cfg, "log_file"))
-    log_level = require_str(logging_cfg, "level")
-
-    problem_type = normalize_problem_type(
+    # Problem config
+    PROBLEM_TYPE = normalize_problem_type(
             require_str(problem_cfg, "problem_type"))
-    if problem_type not in {"classification", "regression"}:
+    TARGET_COLUMN = require_str(problem_cfg, "target_column")
+    if PROBLEM_TYPE not in {"classification", "regression"}:
         raise ValueError(
             "config.yaml: problem.problem_type must be 'classification' or 'regression'"
         )
 
-    target_column = require_str(problem_cfg, "target_column")
-
-    # Resolve paths
-    raw_data_path = resolve_repo_path(
+    # Config data and log paths as well as log level
+    LOG_FILE_PATH = resolve_repo_path(
+        project_root, require_str(paths_cfg, "log_file"), ensure_parent=True)
+    LOG_LEVEL = require_str(logging_cfg, "level")
+    RAW_DATA_PATH = resolve_repo_path(
         project_root, require_str(paths_cfg, "raw_data"))
-    processed_data_path = resolve_repo_path(
-        project_root, require_str(paths_cfg, "processed_data"))
+    PROCESS_DATA_PATH = resolve_repo_path(
+        project_root, require_str(paths_cfg, "processed_data"), ensure_parent=True)
+    
+    # train and split values
+    MAX_ITERATIONS = require_int(training_cfg, "max_iterations")
+    K_MEANS_BINS = require_int(training_cfg, "k_means_bins")
+    RANDOM_STATE = require_int(split_cfg, "random_state")
+    TEST_SIZE = require_float(split_cfg, "test_size")
     
     # Model paths
-    kmeans_path = resolve_repo_path(
-        project_root, require_str(paths_cfg, "kmeans_model"))
-    dtrees_path = resolve_repo_path(
+    KMEANS_MODEL_PATH = resolve_repo_path(
+        project_root, require_str(paths_cfg, "kmeans_model"), ensure_parent=True)
+    DTREES_MODEL_PATH = resolve_repo_path(
         project_root, require_str(paths_cfg, "dtrees_model"))
-    logit_path = resolve_repo_path(
-        project_root, require_str(paths_cfg, "logit_path"))
+    LOGIT_MODEL_PATH = resolve_repo_path(
+        project_root, require_str(paths_cfg, "logit_model"))
     
     # model predictions
-    inference_data_path = resolve_repo_path(
-        project_root, require_str(paths_cfg, "inference_data"))
-    predictions_artifact_path = resolve_repo_path(
-        project_root, require_str(paths_cfg, "predictions_artifact"))
+    KMEANS_PRED_PATH = resolve_repo_path(
+        project_root, require_str(paths_cfg, "kmeans_predictions"), ensure_parent=True)
+    DTREES_PRED_PATH = resolve_repo_path(
+        project_root, require_str(paths_cfg, "dtrees_predictions"))
+    LOGIT_PRED_PATH = resolve_repo_path(
+        project_root, require_str(paths_cfg, "logit_predictions"))
+    
+    # Feature columns
+    QUANTILE_BINS_COLS = require_list(features_cfg, "quantile_bin")
+    CATEGORICAL_ONEHOT_COLS = require_list(
+        features_cfg, "categorical_onehot")
+    NUMERIC_PASSTHROUGH_COLS = require_list(
+        features_cfg, "numeric_passthrough")
+    ORDINAL_ENCODE_COLS = require_list(features_cfg, "ordinal_encode")
+    MIN_MAX_SCALAR_COLS = require_list(features_cfg, "min_max_scaler")
+    N_BINS = require_int(features_cfg, "n_bins")
 
     # -------------------------------------------------------------------
     # STEP 0: Configure logging and ensure output directories exist
     # -------------------------------------------------------------------
-    configure_logging(log_level=log_level, log_file=log_file_path)
+    configure_logging(log_level=LOG_LEVEL, log_file=LOG_FILE_PATH)
     logger.info("Creating output directories if they do not exist...")
-    Path("data/processed").mkdir(parents=True, exist_ok=True)
-    Path("models").mkdir(parents=True, exist_ok=True)
-    Path("reports").mkdir(parents=True, exist_ok=True)
 
     # -------------------------------------------------------------------
     # STEP 1: Load raw data
     # -------------------------------------------------------------------
     logger.info("Step 1 — Loading raw data...")
 
-    df_raw = load_raw_data(raw_data_path)
+    df_raw = load_raw_data(RAW_DATA_PATH)
 
     # -------------------------------------------------------------------
     # STEP 2: Clean data
     # -------------------------------------------------------------------
     logger.info("Step 2 — Cleaning data...")
-    df_clean = clean_dataframe(df_raw, target_column=target_column)
+    df_clean = clean_dataframe(df_raw, target_column=TARGET_COLUMN)
 
     # -------------------------------------------------------------------
     # STEP 3: Save processed CSV
     # -------------------------------------------------------------------
     logger.info("Step 3 — Saving processed CSV...")
-    save_csv(df_clean, processed_data_path)
+    save_csv(df_clean, PROCESS_DATA_PATH)
 
     # -------------------------------------------------------------------
     # STEP 4: Validate cleaned data
     # -------------------------------------------------------------------
     logger.info("Step 4 — Validating cleaned data...")
     required_cols = (
-        SETTINGS["features"]["quantile_bin"]
-        + SETTINGS["features"]["categorical_onehot"]
-        + SETTINGS["features"]["numeric_passthrough"]
-        + SETTINGS["features"]["ordinal_encode"]
-        + SETTINGS["features"]["min_max_scaler"]
-        + [SETTINGS["target_column"]]
+        QUANTILE_BINS_COLS
+        + CATEGORICAL_ONEHOT_COLS
+        + NUMERIC_PASSTHROUGH_COLS
+        + ORDINAL_ENCODE_COLS
+        + MIN_MAX_SCALAR_COLS
+        + [TARGET_COLUMN]
     )
     validate_dataframe(df_clean, required_columns=required_cols)
 
@@ -274,17 +170,17 @@ def main():
     # STEP 5: Train / test split  (MUST happen BEFORE feature fitting)
     # -------------------------------------------------------------------
     logger.info("Step 5 — Splitting into train and test sets...")
-    X = df_clean.drop(columns=target_column)
-    y = df_clean[target_column]
+    X = df_clean.drop(columns=[TARGET_COLUMN])
+    y = df_clean[TARGET_COLUMN]
 
     stratify_arg = None
-    if SETTINGS["problem_type"] == "classification":
+    if PROBLEM_TYPE == "classification":
         try:
             stratify_arg = y
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y,
-                test_size=SETTINGS["test_size"],
-                random_state=SETTINGS["random_state"],
+                test_size=TEST_SIZE,
+                random_state=RANDOM_STATE,
                 stratify=stratify_arg,
             )
         except ValueError as e:
@@ -294,14 +190,14 @@ def main():
             )
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y,
-                test_size=SETTINGS["test_size"],
-                random_state=SETTINGS["random_state"],
+                test_size=TEST_SIZE,
+                random_state=RANDOM_STATE,
             )
     else:
         X_train, X_test, y_train, y_test = train_test_split(
             X, y,
-            test_size=SETTINGS["test_size"],
-            random_state=SETTINGS["random_state"],
+            test_size=TEST_SIZE,
+            random_state=RANDOM_STATE,
         )
 
     logger.info("Train size: %d rows | Test size: %d rows",
@@ -312,23 +208,23 @@ def main():
     # -------------------------------------------------------------------
     logger.info("Step 6 — Verifying feature columns exist in training data")
     all_feature_cols = (
-        SETTINGS["features"]["quantile_bin"]
-        + SETTINGS["features"]["categorical_onehot"]
-        + SETTINGS["features"]["numeric_passthrough"]
-        + SETTINGS["features"]["ordinal_encode"]
-        + SETTINGS["features"]["min_max_scaler"]
+        QUANTILE_BINS_COLS
+        + CATEGORICAL_ONEHOT_COLS
+        + NUMERIC_PASSTHROUGH_COLS
+        + ORDINAL_ENCODE_COLS
+        + MIN_MAX_SCALAR_COLS
     )
     missing_cols = [c for c in all_feature_cols if c not in X_train.columns]
     if missing_cols:
         raise ValueError(
                     f"[main] The following configured feature columns are "
                     f"missing from the data: {missing_cols}\n"
-                    "Update the 'features' section in SETTINGS to match "
+                    "Update the 'features' section in config to match "
                     "your actual column names."
                 )
 
     # Check that quantile_bin columns are numeric
-    for col in SETTINGS["features"]["quantile_bin"]:
+    for col in QUANTILE_BINS_COLS:
         if not pd.api.types.is_numeric_dtype(X_train[col]):
             raise TypeError(
                     f"[main] Column '{col}' is listed under "
@@ -342,13 +238,13 @@ def main():
     # -------------------------------------------------------------------
     logger.info("Step 7 — Building feature preprocessor recipe...")
     preprocessor = get_feature_preprocessor(
-        quantile_bin_cols=SETTINGS["features"]["quantile_bin"],
-        categorical_onehot_cols=SETTINGS["features"]["categorical_onehot"],
-        min_max_cols=SETTINGS["features"]["min_max_scaler"],
-        ordinal_encode_cols=SETTINGS["features"]["ordinal_encode"],
-        numeric_passthrough_cols=SETTINGS["features"]["numeric_passthrough"],
+        quantile_bin_cols=QUANTILE_BINS_COLS,
+        categorical_onehot_cols=CATEGORICAL_ONEHOT_COLS,
+        min_max_cols=MIN_MAX_SCALAR_COLS,
+        ordinal_encode_cols=ORDINAL_ENCODE_COLS,
+        numeric_passthrough_cols=NUMERIC_PASSTHROUGH_COLS,
 
-        n_bins=SETTINGS["features"]["n_bins"],
+        n_bins=N_BINS,
     )
 
     # -------------------------------------------------------------------
@@ -357,26 +253,26 @@ def main():
     logger.info("Step 8 — Training model...")
     kmeans_model = train_kmeans_model(X_train=X_train,
                                       preprocessor=preprocessor,
-                                      n_clusters=SETTINGS["k_means_bins"])
+                                      n_clusters=K_MEANS_BINS)
 
     # dtrees train model
     dtrees_model = train_dtrees_model(X_train=X_train, y_train=y_train,
                                       preprocessor=preprocessor,
-                                      problem_type=SETTINGS["problem_type"],)
+                                      problem_type=PROBLEM_TYPE)
 
     # logit train model
     logit_model = train_logit_model(X_train, y_train, preprocessor,
-                                    SETTINGS["problem_type"],
-                                    SETTINGS["random_state"],
-                                    SETTINGS["max_iterations"])
+                                    PROBLEM_TYPE,
+                                    RANDOM_STATE,
+                                    MAX_ITERATIONS)
 
     # -------------------------------------------------------------------
     # STEP 9: Save trained model artifact
     # -------------------------------------------------------------------
     logger.info("Step 9 — Saving model artifact...")
-    save_model(kmeans_model, SETTINGS["kmeans_model_path"])
-    save_model(dtrees_model, SETTINGS["dtrees_model_path"])
-    save_model(logit_model, SETTINGS["logit_model_path"])
+    save_model(kmeans_model, KMEANS_MODEL_PATH)
+    save_model(dtrees_model, DTREES_MODEL_PATH)
+    save_model(logit_model, LOGIT_MODEL_PATH)
 
     # -------------------------------------------------------------------
     # STEP 10: Evaluate on held-out test set
@@ -386,20 +282,20 @@ def main():
     # Evaluate kmeans model
     kmeans_metric_value = evaluate_kmeans_model(model=kmeans_model,
                                                 X_test=X_test)
-    metric_label = ("RMSE" if SETTINGS["problem_type"] == "regression"
+    metric_label = ("RMSE" if PROBLEM_TYPE == "regression"
                     else "F1 (weighted)")
     logger.info("Kmeans Metrics %s: %.4f", metric_label, kmeans_metric_value)
 
     # Evaluate dtrees model
     dtrees_metrics = evaluate_dtrees_model(model=dtrees_model, X_test=X_test,
                                            y_test=y_test,
-                                           prob_type=SETTINGS['problem_type'])
+                                           prob_type=PROBLEM_TYPE)
     logger.info("Decision Tree Metrics %s: %s", metric_label, dtrees_metrics)
 
     # Evaluate logit model
     logit_metrics = evaluate_logit_model(model=logit_model, X_test=X_test,
                                          y_test=y_test,
-                                         prob_type=SETTINGS['problem_type'])
+                                         prob_type=PROBLEM_TYPE)
     logger.info("Logistic Regression Metrics %s: %s",
                 metric_label, logit_metrics)
 
@@ -423,14 +319,14 @@ def main():
     # STEP 12: Save predictions artifact
     # -------------------------------------------------------------------
     logger.info("Step 12 — Saving predictions CSV...")
-    save_csv(kmeans_predictions_df, SETTINGS["kmeans_predictions_path"])
-    save_csv(dtrees_predictions_df, SETTINGS["dtrees_predictions_path"])
-    save_csv(logit_predictions_df, SETTINGS["logit_predictions_path"])
+    save_csv(kmeans_predictions_df, KMEANS_PRED_PATH)
+    save_csv(dtrees_predictions_df, DTREES_PRED_PATH)
+    save_csv(logit_predictions_df, LOGIT_PRED_PATH)
 
     logger.info("Pipeline complete!")
-    logger.info("  Processed data : %s", SETTINGS['processed_data_path'])
-    logger.info("  Model artifact : %s", SETTINGS['logit_model_path'])
-    logger.info("  Predictions    : %s", SETTINGS['kmeans_predictions_path'])
+    logger.info("  Processed data : %s", PROCESS_DATA_PATH)
+    logger.info("  Model artifact : %s", LOGIT_MODEL_PATH)
+    logger.info("  Predictions    : %s", KMEANS_PRED_PATH)
 
 
 if __name__ == "__main__":
