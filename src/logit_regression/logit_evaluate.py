@@ -7,13 +7,14 @@ Educational Goal:
 - Pipeline contract (inputs and outputs): Input is a fitted model Pipeline
   and held-out test set; output is a dictionary of performance metrics.
 
-TODO: Replace print statements with standard library logging in a later
-session
 TODO: Any temporary or hardcoded variable or parameter will be imported
 from config.yml in a later session
 """
 
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 import numpy as np
 import pandas as pd
@@ -46,7 +47,7 @@ def __plot_roc_curve(fpr, tpr, auc_score, save_path):
     plt.grid(True, alpha=0.3)
     plt.savefig(save_path, bbox_inches="tight")
     plt.close()
-    print(f"ROC curve saved to {save_path}")
+    logger.info("ROC curve saved to %s", save_path)
 
 
 def __find_optimal_threshold(fpr, tpr, thresholds):
@@ -87,7 +88,7 @@ def __plot_confusion_matrix(cm, save_path):
     plt.tight_layout()
     plt.savefig(save_path, bbox_inches="tight")
     plt.close()
-    print(f"Confusion matrix saved to {save_path}")
+    logger.info("Confusion matrix saved to %s", save_path)
 
 
 def __plot_coefficients(model, save_path):
@@ -111,7 +112,7 @@ def __plot_coefficients(model, save_path):
     plt.tight_layout()
     plt.savefig(save_path, bbox_inches="tight")
     plt.close()
-    print(f"Coefficients chart saved to {save_path}")
+    logger.info("Coefficients chart saved to %s", save_path)
 
 
 def evaluate_logit_model(
@@ -126,7 +127,7 @@ def evaluate_logit_model(
     Outputs:
     - dict of performance metrics (optimal threshold, test set)
     """
-    print("evaluate_model: evaluating model on held-out test set")
+    logger.info("Evaluating model on held-out test set")
 
     if prob_type not in ["regression", "classification"]:
         msg = (

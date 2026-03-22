@@ -1,8 +1,11 @@
+import logging
 from pathlib import Path
 
 import joblib
 import pandas as pd
 import csv
+
+logger = logging.getLogger(__name__)
 
 
 def _check_path_exists(filepath: Path):
@@ -52,13 +55,10 @@ def load_csv(filepath: Path) -> pd.DataFrame:
 
     # Make sure file exists
     _check_path_exists(filepath)
-    msg = f"[utils] Loading CSV from: {filepath}"
-    print(msg)  # TODO: replace with logging later
+    logger.info("Loading CSV from: %s", filepath)
 
     df = pd.read_csv(filepath, sep=_get_csv_delimiter(filepath))
-    msg = (f"[utils]   Loaded {len(df)} rows x "
-           f"{len(df.columns)} columns.")
-    print(msg)  # TODO: replace with logging later
+    logger.info("Loaded %d rows x %d columns.", len(df), len(df.columns))
     return df
 
 
@@ -72,12 +72,10 @@ def save_csv(df: pd.DataFrame, filepath: Path) -> None:
     - None (side-effect: CSV file written to disk)
     """
     _make_parent_dir(filepath)
-    msg = f"[utils] Saving CSV to: {filepath}"
-    print(msg)  # TODO: replace with logging later
+    logger.info("Saving CSV to: %s", filepath)
 
     df.to_csv(filepath, index=False, sep=",")
-    msg = f"[utils]   Saved {len(df)} rows to {filepath}"
-    print(msg)  # TODO: replace with logging later
+    logger.info("Saved %d rows to %s", len(df), filepath)
 
 
 def save_model(model, filepath: Path) -> None:
@@ -91,12 +89,10 @@ def save_model(model, filepath: Path) -> None:
     - None (side-effect: model serialised to disk)
     """
     _make_parent_dir(filepath)
-    msg = f"[utils] Saving model to: {filepath}"
-    print(msg)  # TODO: replace with logging later
+    logger.info("Saving model to: %s", filepath)
 
     joblib.dump(model, filepath, compress=3)
-    msg = f"[utils]   Model saved to {filepath}"
-    print(msg)  # TODO: replace with logging later
+    logger.info("Model saved to %s", filepath)
 
 
 def load_model(filepath: Path):
@@ -107,10 +103,8 @@ def load_model(filepath: Path):
     - The deserialised model object (typically a fitted sklearn Pipeline)
     """
     _check_path_exists(filepath)
-    msg = f"[utils] Loading model from: {filepath}"
-    print(msg)  # TODO: replace with logging later
+    logger.info("Loading model from: %s", filepath)
 
     model = joblib.load(filepath)
-    msg = f"[utils]   Model loaded from {filepath}"
-    print(msg)  # TODO: replace with logging later
+    logger.info("Model loaded from %s", filepath)
     return model

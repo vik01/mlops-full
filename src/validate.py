@@ -1,11 +1,12 @@
 """
-TODO: Replace print statements with standard library logging in a
-     later session
 TODO: Any temporary or hardcoded variable or parameter will be
      imported from config.yml in a later session
 """
 
+import logging
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 def validate_dataframe(df: pd.DataFrame, required_columns: list) -> bool:
@@ -18,8 +19,7 @@ def validate_dataframe(df: pd.DataFrame, required_columns: list) -> bool:
     - Raises ValueError if the DataFrame misses required columns, has too many
       nulls, contains unexpected target values, or fails any other checks.
     """
-    print("[validate] Running data validation checks...")
-    # TODO: replace with logging later
+    logger.info("Running data validation checks...")
 
     # ------------------------------------------------------------------
     # CHECK 1: DataFrame must not be empty
@@ -127,12 +127,8 @@ def validate_dataframe(df: pd.DataFrame, required_columns: list) -> bool:
             )
 
     rows, cols = df.shape
-    print(f"[validate]   Shape: {rows} rows x {cols} columns.")
-    # TODO: replace with logging later
-    print(f"[validate]   All {len(required_columns)} required "
-          f"columns present.")
-    # TODO: replace with logging later
-    print("[validate] Validation passed.")
-    # TODO: replace with logging later
+    logger.info("Shape: %d rows x %d columns.", rows, cols)
+    logger.info("All %d required columns present.", len(required_columns))
+    logger.info("Validation passed.")
 
     return True

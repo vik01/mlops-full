@@ -7,12 +7,14 @@ Educational Goal:
 - Pipeline contract (inputs and outputs): Inputs are X_train, y_train, a
     preprocessor recipe, and problem_type; output is a fitted sklearn Pipeline.
 
-TODO: Replace print statements with standard library logging in a later session
 TODO: Any temporary or hardcoded variable or parameter will be imported from
 config.yml in a later session
 """
 
+import logging
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, LogisticRegression
@@ -51,9 +53,7 @@ def train_logit_model(
     if not isinstance(max_iterations, int):
         raise TypeError("max_iterations must be an int")
 
-    print("""[logit_train.logit_train]  Fitting model Pipeline
-          (preprocess -> estimator)""")
-    # TODO: replace with logging later
+    logger.info("Fitting model Pipeline (preprocess -> estimator)")
 
     if problem_type not in ["regression", "classification"]:
         raise ValueError(

@@ -4,10 +4,12 @@ Educational Goal:
 - Responsibility (separation of concerns): Fit Pipeline(preprocess + KMeans).
 - Pipeline contract (inputs and outputs): X_train -> fitted Pipeline.
 
-TODO: Replace print statements with standard library logging in a later session
 """
 
+import logging
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.cluster import KMeans
@@ -32,7 +34,7 @@ def train_kmeans_model(X_train: pd.DataFrame,
     if not isinstance(n_clusters, int):
         raise TypeError("n_clusters must be an int")
 
-    print("[kmeans.train] Training KMeans Pipeline")  # TODO
+    logger.info("Training KMeans Pipeline")
 
     if n_clusters < 1:
         raise ValueError("n_clusters must be >= 1")

@@ -7,12 +7,14 @@ generate predictions so downstream systems can rely on a stable schema.
 - Pipeline contract (inputs and outputs): Input is a trained model Pipeline
     and feature dataframe; output is a prediction dataframe with a single col.
 
-TODO: Replace print statements with standard library logging in a later session
 TODO: Any temporary or hardcoded variable or parameter will be imported from
 config.yml in a later session
 """
 
+import logging
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 def run_logit_inference(model, X_infer: pd.DataFrame, optimal_threshold: float) -> pd.DataFrame:
@@ -27,8 +29,7 @@ def run_logit_inference(model, X_infer: pd.DataFrame, optimal_threshold: float) 
     - A stable prediction output reduces integration bugs and keeps
     batch/online serving consistent.
     """
-    print("run_inference: generating predictions")
-    # TODO: replace with logging later
+    logger.info("Generating predictions")
 
     y_proba = model.predict_proba(X_infer)[:, 1]
     y_pred = (y_proba >= optimal_threshold).astype(int)

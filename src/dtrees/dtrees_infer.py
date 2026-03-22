@@ -15,12 +15,14 @@ Educational Goal:
 - Pipeline contract (inputs and outputs): Input is any DataFrame with the same
     feature columns used during training. Output is a single-column DataFrame.
 
-TODO: Replace print statements with standard library logging in a later session
 TODO: Any temporary or hardcoded variable or parameter will be imported from
 config.yml in a later session
 """
 
+import logging
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 def run_dtrees_inference(model, X_infer):
@@ -36,9 +38,7 @@ def run_dtrees_inference(model, X_infer):
     - Preserving the input index means predictions can be joined back to the
       original patient records without ambiguity.
     """
-    print(
-        f"Running inference on {len(X_infer)} rows...")
-    # TODO: replace with logging later
+    logger.info("Running inference on %d rows...", len(X_infer))
 
     try:
         predictions = model.predict(X_infer)
@@ -52,8 +52,7 @@ def run_dtrees_inference(model, X_infer):
         index=X_infer.index,
     )
 
-    print("[dtrees_infer.run_inference] Inference complete.")
-    # TODO: replace with logging later
+    logger.info("Inference complete.")
 
     # --------------------------------------------------------
     # START STUDENT CODE

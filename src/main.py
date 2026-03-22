@@ -5,7 +5,6 @@ Role: Orchestrate the entire flow
         (Load -> Clean -> Validate -> Train -> Evaluate).
 Usage: python -m src.main
 
-TODO: Replace print statements with standard library logging in a later session
 TODO: Any temporary or hardcoded variable or parameter will be imported from
     config.yml in a later session
 """
@@ -14,10 +13,11 @@ TODO: Any temporary or hardcoded variable or parameter will be imported from
 # 1. IMPORTS
 # ===========================================================================
 from pathlib import Path
-
+import logging
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
+from logger import configure_logging
 from load_data import load_raw_data
 from clean_data import clean_dataframe
 from validate import validate_dataframe
@@ -38,6 +38,8 @@ from logit_regression.logit_infer import run_logit_inference
 from dtrees.dtrees_train import train_dtrees_model
 from dtrees.dtrees_eval import evaluate_dtrees_model
 from dtrees.dtrees_infer import run_dtrees_inference
+
+logger = logging.getLogger(__name__)
 
 # ===========================================================================
 # 2. CONFIGURATION  —  SETTINGS BRIDGE
@@ -84,10 +86,10 @@ def main():
     - reports/predictions.csv   — inference output written to disk
     """
     # -------------------------------------------------------------------
-    # STEP 0: Ensure output directories exist
+    # STEP 0: Configure logging and ensure output directories exist
     # -------------------------------------------------------------------
-    print("\n[main] Creating output directories if they do not exist...")
-    # TODO: replace with logging later
+    configure_logging(log_level="INFO", log_file=Path("logs/pipeline.log"))
+    logger.info("Creating output directories if they do not exist...")
     Path("data/processed").mkdir(parents=True, exist_ok=True)
     Path("models").mkdir(parents=True, exist_ok=True)
     Path("reports").mkdir(parents=True, exist_ok=True)
@@ -95,29 +97,25 @@ def main():
     # -------------------------------------------------------------------
     # STEP 1: Load raw data
     # -------------------------------------------------------------------
-    print("[main] Step 1 — Loading raw data...")
-    # TODO: replace with logging later
+    logger.info("Step 1 — Loading raw data...")
     df_raw = load_raw_data(SETTINGS["raw_data_path"])
 
     # -------------------------------------------------------------------
     # STEP 2: Clean data
     # -------------------------------------------------------------------
-    print("[main] Step 2 — Cleaning data...")
-    # TODO: replace with logging later
+    logger.info("Step 2 — Cleaning data...")
     df_clean = clean_dataframe(df_raw, target_column=SETTINGS["target_column"])
 
     # -------------------------------------------------------------------
     # STEP 3: Save processed CSV
     # -------------------------------------------------------------------
-    print("[main] Step 3 — Saving processed CSV...")
-    # TODO: replace with logging later
+    logger.info("Step 3 — Saving processed CSV...")
     save_csv(df_clean, SETTINGS["processed_data_path"])
 
     # -------------------------------------------------------------------
     # STEP 4: Validate cleaned data
     # -------------------------------------------------------------------
-    print("[main] Step 4 — Validating cleaned data...")
-    # TODO: replace with logging later
+    logger.info("Step 4 — Validating cleaned data...")
     required_cols = (
         SETTINGS["features"]["quantile_bin"]
         + SETTINGS["features"]["categorical_onehot"]
@@ -131,8 +129,7 @@ def main():
     # -------------------------------------------------------------------
     # STEP 5: Train / test split  (MUST happen BEFORE feature fitting)
     # -------------------------------------------------------------------
-    print("[main] Step 5 — Splitting into train and test sets...")
-    # TODO: replace with logging later
+    logger.info("Step 5 — Splitting into train and test sets...")
     X = df_clean.drop(columns=[SETTINGS["target_column"]])
     y = df_clean[SETTINGS["target_column"]]
 
@@ -147,11 +144,10 @@ def main():
                 stratify=stratify_arg,
             )
         except ValueError as e:
-            print(
-                f"[main] Stratified split failed ({e}). "
-                "Falling back to random split."
+            logger.info(
+                "Stratified split failed (%s). "
+                "Falling back to random split.", e
             )
-            # TODO: replace with logging later
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y,
                 test_size=SETTINGS["test_size"],
@@ -164,14 +160,13 @@ def main():
             random_state=SETTINGS["random_state"],
         )
 
-    print(f"[main]Train size:{len(X_train)} rows|Test size:{len(X_test)} rows")
-    # TODO: replace with logging later
+    logger.info("Train size: %d rows | Test size: %d rows",
+                len(X_train), len(X_test))
 
     # -------------------------------------------------------------------
     # STEP 6: Fail-fast feature checks
     # -------------------------------------------------------------------
-    print("[main] Step 6 — Verifying feature columns exist in training data")
-    # TODO: replace with logging later
+    logger.info("Step 6 — Verifying feature columns exist in training data")
     all_feature_cols = (
         SETTINGS["features"]["quantile_bin"]
         + SETTINGS["features"]["categorical_onehot"]
@@ -201,8 +196,7 @@ def main():
     # STEP 7: Build feature preprocessor (ColumnTransformer recipe only —
     #          no fitting here, fitting happens inside train_model)
     # -------------------------------------------------------------------
-    print("[main] Step 7 — Building feature preprocessor recipe...")
-    # TODO: replace with logging later
+    logger.info("Step 7 — Building feature preprocessor recipe...")
     preprocessor = get_feature_preprocessor(
         quantile_bin_cols=SETTINGS["features"]["quantile_bin"],
         categorical_onehot_cols=SETTINGS["features"]["categorical_onehot"],
@@ -216,8 +210,7 @@ def main():
     # -------------------------------------------------------------------
     # STEP 8: Train model (Pipeline: preprocess + estimator, fit on train)
     # -------------------------------------------------------------------
-    print("[main] Step 8 — Training model...")
-    # TODO: replace with logging later
+    logger.info("Step 8 — Training model...")
     kmeans_model = train_kmeans_model(X_train=X_train,
                                       preprocessor=preprocessor,
                                       n_clusters=SETTINGS["k_means_bins"])
@@ -236,8 +229,7 @@ def main():
     # -------------------------------------------------------------------
     # STEP 9: Save trained model artifact
     # -------------------------------------------------------------------
-    print("[main] Step 9 — Saving model artifact...")
-    # TODO: replace with logging later
+    logger.info("Step 9 — Saving model artifact...")
     save_model(kmeans_model, SETTINGS["kmeans_model_path"])
     save_model(dtrees_model, SETTINGS["dtrees_model_path"])
     save_model(logit_model, SETTINGS["logit_model_path"])
@@ -245,35 +237,32 @@ def main():
     # -------------------------------------------------------------------
     # STEP 10: Evaluate on held-out test set
     # -------------------------------------------------------------------
-    print("[main] Step 10 — Evaluating model on test set...")
-    # TODO: replace with logging later
+    logger.info("Step 10 — Evaluating model on test set...")
 
     # Evaluate kmeans model
     kmeans_metric_value = evaluate_kmeans_model(model=kmeans_model,
                                                 X_test=X_test)
     metric_label = ("RMSE" if SETTINGS["problem_type"] == "regression"
                     else "F1 (weighted)")
-    print(f"[main] Kmeans Metrics {metric_label}: {kmeans_metric_value:.4f}")
-    # TODO: replace with logging later
+    logger.info("Kmeans Metrics %s: %.4f", metric_label, kmeans_metric_value)
 
     # Evaluate dtrees model
     dtrees_metrics = evaluate_dtrees_model(model=dtrees_model, X_test=X_test,
                                            y_test=y_test,
                                            prob_type=SETTINGS['problem_type'])
-    print(f"[main] Decision Tree Metrics {metric_label}: {dtrees_metrics}")
-    # TODO: replace with logging later
+    logger.info("Decision Tree Metrics %s: %s", metric_label, dtrees_metrics)
 
     # Evaluate logit model
     logit_metrics = evaluate_logit_model(model=logit_model, X_test=X_test,
                                          y_test=y_test,
                                          prob_type=SETTINGS['problem_type'])
-    print(f"[main] Logistic Regression Metrics{metric_label}: {logit_metrics}")
+    logger.info("Logistic Regression Metrics %s: %s",
+                metric_label, logit_metrics)
 
     # -------------------------------------------------------------------
     # STEP 11: Run inference on example data (first 5 rows of test set)
     # -------------------------------------------------------------------
-    print("[main] Step 11 — Running inference on example rows...")
-    # TODO: replace with logging later
+    logger.info("Step 11 — Running inference on example rows...")
     # Kmeans inference example
     X_example = X_test.head(5)
     kmeans_predictions_df = run_kmeans_inference(model=kmeans_model,
@@ -289,16 +278,15 @@ def main():
     # -------------------------------------------------------------------
     # STEP 12: Save predictions artifact
     # -------------------------------------------------------------------
-    print("[main] Step 12 — Saving predictions CSV...")
-    # TODO: replace with logging later
+    logger.info("Step 12 — Saving predictions CSV...")
     save_csv(kmeans_predictions_df, SETTINGS["kmeans_predictions_path"])
     save_csv(dtrees_predictions_df, SETTINGS["dtrees_predictions_path"])
     save_csv(logit_predictions_df, SETTINGS["logit_predictions_path"])
 
-    print("\n[main] Pipeline complete!")  # TODO: replace with logging later
-    print(f"  Processed data : {SETTINGS['processed_data_path']}")
-    print(f"  Model artifact : {SETTINGS['logit_model_path']}")
-    print(f"  Predictions    : {SETTINGS['kmeans_predictions_path']}")
+    logger.info("Pipeline complete!")
+    logger.info("  Processed data : %s", SETTINGS['processed_data_path'])
+    logger.info("  Model artifact : %s", SETTINGS['logit_model_path'])
+    logger.info("  Predictions    : %s", SETTINGS['kmeans_predictions_path'])
 
 
 if __name__ == "__main__":
