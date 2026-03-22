@@ -14,6 +14,7 @@ from config.yml in a later session
 # Standard Library Imports
 import logging
 import os
+from pathlib import Path
 
 # Third-party Imports
 import numpy as np
@@ -27,10 +28,20 @@ from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
 )
 
+## Local Module Imports
+from utils import load_config, require_section, require_str, resolve_repo_path
+
 logger = logging.getLogger(__name__)
+project_root = Path(__file__).resolve().parents[2]
 
+# Load and validate config.yaml
+cfg = load_config(project_root / "config.yaml")
 
-_INFERENCE_DIR = os.path.join("data", "inference")
+# Load required sections from config file
+paths_cfg = require_section(cfg, "paths")
+
+_INFERENCE_DIR = resolve_repo_path(
+    project_root, require_str(paths_cfg, "inference_data"), ensure_parent=True)
 
 
 def __plot_roc_curve(fpr, tpr, auc_score, save_path):
