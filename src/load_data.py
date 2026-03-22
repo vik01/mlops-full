@@ -8,7 +8,7 @@ TODO: Any temporary or hardcoded variable or parameter will be imported
 from pathlib import Path
 import pandas as pd
 
-from src.utils import load_csv
+from utils import load_csv
 
 
 def load_raw_data(raw_data_path: Path) -> pd.DataFrame:

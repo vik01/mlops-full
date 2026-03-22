@@ -18,26 +18,26 @@ from pathlib import Path
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from src.load_data import load_raw_data
-from src.clean_data import clean_dataframe
-from src.validate import validate_dataframe
-from src.features import get_feature_preprocessor
-from src.utils import save_csv, save_model
+from load_data import load_raw_data
+from clean_data import clean_dataframe
+from validate import validate_dataframe
+from features import get_feature_preprocessor
+from utils import save_csv, save_model
 
 # Get kmeans functions
-from src.kmeans.kmeans_evaluate import evaluate_kmeans_model
-from src.kmeans.kmeans_infer import run_kmeans_inference
-from src.kmeans.kmeans_train import train_kmeans_model
+from kmeans.kmeans_evaluate import evaluate_kmeans_model
+from kmeans.kmeans_infer import run_kmeans_inference
+from kmeans.kmeans_train import train_kmeans_model
 
 # Get logitic regression functions
-from src.logit_regression.logit_train import train_logit_model
-from src.logit_regression.logit_evaluate import evaluate_logit_model
-from src.logit_regression.logit_infer import run_logit_inference
+from logit_regression.logit_train import train_logit_model
+from logit_regression.logit_evaluate import evaluate_logit_model
+from logit_regression.logit_infer import run_logit_inference
 
 # Get decision tree functions
-from src.dtrees.dtrees_train import train_dtrees_model
-from src.dtrees.dtrees_eval import evaluate_dtrees_model
-from src.dtrees.dtrees_infer import run_dtrees_inference
+from dtrees.dtrees_train import train_dtrees_model
+from dtrees.dtrees_eval import evaluate_dtrees_model
+from dtrees.dtrees_infer import run_dtrees_inference
 
 # ===========================================================================
 # 2. CONFIGURATION  —  SETTINGS BRIDGE

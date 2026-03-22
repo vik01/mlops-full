@@ -137,10 +137,18 @@ def evaluate_logit_model(
 
     os.makedirs(_INFERENCE_DIR, exist_ok=True)
 
+    # Encode string labels to numeric for sklearn metrics
+    label_map = {"Absence": 0, "Presence": 1}
+    y_test_numeric = (
+        y_test.map(label_map)
+        if not pd.api.types.is_numeric_dtype(y_test)
+        else y_test
+    )
+
     # 1. ROC curve and AUC
     y_prob = model.predict_proba(X_test)[:, 1]
-    fpr, tpr, thresholds = roc_curve(y_test, y_prob)
-    auc_score = roc_auc_score(y_test, y_prob)
+    fpr, tpr, thresholds = roc_curve(y_test_numeric, y_prob)
+    auc_score = roc_auc_score(y_test_numeric, y_prob)
 
     roc_path = os.path.join(_INFERENCE_DIR, "logit_roc.jpg")
     __plot_roc_curve(fpr, tpr, auc_score, roc_path)
@@ -151,13 +159,19 @@ def evaluate_logit_model(
     # 3. Predictions at optimal threshold
     y_pred_optimal = (y_prob >= optimal_threshold).astype(int)
 
-    # 4. Confusion matrix (test set only)
-    cm = confusion_matrix(y_test, y_pred_optimal)
+    # 4. Confusion matrix (test set only) — use original labels for display
+    inverse_map = {0: "Absence", 1: "Presence"}
+    y_test_labels = y_test_numeric.map(inverse_map)
+    y_pred_labels = pd.Series(y_pred_optimal, index=y_test.index).map(inverse_map)
+    cm = confusion_matrix(y_test_labels, y_pred_labels, labels=["Absence", "Presence"])
     cm_path = os.path.join(_INFERENCE_DIR, "logit_optimal_roc.jpg")
     __plot_confusion_matrix(cm, cm_path)
 
-    # 5. Metrics
-    metrics = __calculate_metrics(cm, y_test, y_pred_optimal)
+    # 5. Metrics — use numeric for sklearn metric functions
+    metrics = __calculate_metrics(
+        confusion_matrix(y_test_numeric, y_pred_optimal),
+        y_test_numeric, y_pred_optimal,
+    )
     metrics["optimal_threshold"] = optimal_threshold
 
     # 6. Coefficient bar chart
