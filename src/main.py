@@ -15,10 +15,12 @@ TODO: Any temporary or hardcoded variable or parameter will be imported from
 # Standard Library Imports
 from pathlib import Path
 import logging
+from typing import Any, Dict, List, Optional
 
 # Third-party Imports
 import pandas as pd
 from sklearn.model_selection import train_test_split
+import yaml
 
 # Local Module Imports
 from logger import configure_logging
@@ -44,6 +46,94 @@ from dtrees.dtrees_eval import evaluate_dtrees_model
 from dtrees.dtrees_infer import run_dtrees_inference
 
 logger = logging.getLogger(__name__)
+
+
+def load_config(config_path: Path) -> Dict[str, Any]:
+    """
+    Load YAML configuration from disk
+
+    Why this exists
+    - Centralizing config loading prevents "config drift" where different modules parse YAML differently
+    - Fail fast with clear messages when config.yaml is missing or malformed
+    """
+    if not config_path.exists():
+        raise FileNotFoundError(f"Config file not found at: {config_path}")
+
+    with config_path.open("r", encoding="utf-8") as f:
+        cfg = yaml.safe_load(f)
+
+    if not isinstance(cfg, dict):
+        raise ValueError(
+            "config.yaml must parse into a dictionary at the top level")
+
+    return cfg
+
+
+def require_section(cfg: Dict[str, Any], section: str) -> Dict[str, Any]:
+    """
+    Enforce a required top-level config section
+
+    Why this exists
+    - This produces an actionable error tied to config.yaml structure
+    """
+    value = cfg.get(section)
+    if not isinstance(value, dict):
+        raise ValueError(
+            f"config.yaml must contain a top-level '{section}' mapping")
+    return value
+
+
+def require_str(section: Dict[str, Any], key: str) -> str:
+    value = section.get(key)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"config.yaml: '{key}' must be a non-empty string")
+    return value.strip()
+
+
+def require_float(section: Dict[str, Any], key: str) -> float:
+    value = section.get(key)
+    try:
+        return float(value)
+    except Exception as e:
+        raise ValueError(
+            f"config.yaml: '{key}' must be a number. Got '{value}'") from e
+    
+
+def require_int(section: Dict[str, Any], key: str) -> int:
+    value = section.get(key)
+    try:
+        return int(value)
+    except Exception as e:
+        raise ValueError(
+            f"config.yaml: '{key}' must be an integer. Got '{value}'") from e
+
+
+def require_list(section: Dict[str, Any], key: str) -> List[str]:
+    value = section.get(key)
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise ValueError(
+            f"config.yaml: '{key}' must be a list. Got type={type(value)}")
+    out: List[str] = []
+    for item in value:
+        if isinstance(item, str) and item.strip():
+            out.append(item.strip())
+    return out
+
+
+def normalize_problem_type(problem_type: Optional[str]) -> str:
+    return (problem_type or "").strip().lower()
+
+def resolve_repo_path(project_root: Path, relative_path: str) -> Path:
+    """
+    Resolve a config path relative to the repo root
+
+    This makes the repo reproducible across machines because we never rely on the current working directory
+    """
+    if not isinstance(relative_path, str) or not relative_path.strip():
+        raise ValueError("config.yaml: path values must be non-empty strings")
+    return project_root / relative_path.strip()
 
 # ===========================================================================
 # 2. CONFIGURATION  —  SETTINGS BRIDGE
@@ -89,10 +179,59 @@ def main():
     - models/model.joblib        — trained sklearn Pipeline written to disk
     - reports/predictions.csv   — inference output written to disk
     """
+    project_root = Path(__file__).resolve().parents[1]
+
+    # -----------------------------
+    # Load and validate config.yaml
+    # -----------------------------
+    cfg = load_config(project_root / "config.yaml")
+
+    paths_cfg = require_section(cfg, "paths")
+    problem_cfg = require_section(cfg, "problem")
+    split_cfg = require_section(cfg, "split")
+    features_cfg = require_section(cfg, "features")
+    # validation_cfg = require_section(cfg, "validation")
+    # run_cfg = require_section(cfg, "run")
+    training_cfg = require_section(cfg, "training")
+    logging_cfg = require_section(cfg, "logging")
+
+    log_file_path = resolve_repo_path(
+        project_root, require_str(paths_cfg, "log_file"))
+    log_level = require_str(logging_cfg, "level")
+
+    problem_type = normalize_problem_type(
+            require_str(problem_cfg, "problem_type"))
+    if problem_type not in {"classification", "regression"}:
+        raise ValueError(
+            "config.yaml: problem.problem_type must be 'classification' or 'regression'"
+        )
+
+    target_column = require_str(problem_cfg, "target_column")
+
+    # Resolve paths
+    raw_data_path = resolve_repo_path(
+        project_root, require_str(paths_cfg, "raw_data"))
+    processed_data_path = resolve_repo_path(
+        project_root, require_str(paths_cfg, "processed_data"))
+    
+    # Model paths
+    kmeans_path = resolve_repo_path(
+        project_root, require_str(paths_cfg, "kmeans_model"))
+    dtrees_path = resolve_repo_path(
+        project_root, require_str(paths_cfg, "dtrees_model"))
+    logit_path = resolve_repo_path(
+        project_root, require_str(paths_cfg, "logit_path"))
+    
+    # model predictions
+    inference_data_path = resolve_repo_path(
+        project_root, require_str(paths_cfg, "inference_data"))
+    predictions_artifact_path = resolve_repo_path(
+        project_root, require_str(paths_cfg, "predictions_artifact"))
+
     # -------------------------------------------------------------------
     # STEP 0: Configure logging and ensure output directories exist
     # -------------------------------------------------------------------
-    configure_logging(log_level="INFO", log_file=Path("logs/pipeline.log"))
+    configure_logging(log_level=log_level, log_file=log_file_path)
     logger.info("Creating output directories if they do not exist...")
     Path("data/processed").mkdir(parents=True, exist_ok=True)
     Path("models").mkdir(parents=True, exist_ok=True)
@@ -102,19 +241,20 @@ def main():
     # STEP 1: Load raw data
     # -------------------------------------------------------------------
     logger.info("Step 1 — Loading raw data...")
-    df_raw = load_raw_data(SETTINGS["raw_data_path"])
+
+    df_raw = load_raw_data(raw_data_path)
 
     # -------------------------------------------------------------------
     # STEP 2: Clean data
     # -------------------------------------------------------------------
     logger.info("Step 2 — Cleaning data...")
-    df_clean = clean_dataframe(df_raw, target_column=SETTINGS["target_column"])
+    df_clean = clean_dataframe(df_raw, target_column=target_column)
 
     # -------------------------------------------------------------------
     # STEP 3: Save processed CSV
     # -------------------------------------------------------------------
     logger.info("Step 3 — Saving processed CSV...")
-    save_csv(df_clean, SETTINGS["processed_data_path"])
+    save_csv(df_clean, processed_data_path)
 
     # -------------------------------------------------------------------
     # STEP 4: Validate cleaned data
@@ -134,8 +274,8 @@ def main():
     # STEP 5: Train / test split  (MUST happen BEFORE feature fitting)
     # -------------------------------------------------------------------
     logger.info("Step 5 — Splitting into train and test sets...")
-    X = df_clean.drop(columns=[SETTINGS["target_column"]])
-    y = df_clean[SETTINGS["target_column"]]
+    X = df_clean.drop(columns=target_column)
+    y = df_clean[target_column]
 
     stratify_arg = None
     if SETTINGS["problem_type"] == "classification":
