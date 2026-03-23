@@ -7,15 +7,20 @@ generate predictions so downstream systems can rely on a stable schema.
 - Pipeline contract (inputs and outputs): Input is a trained model Pipeline
     and feature dataframe; output is a prediction dataframe with a single col.
 
-TODO: Replace print statements with standard library logging in a later session
 TODO: Any temporary or hardcoded variable or parameter will be imported from
 config.yml in a later session
 """
 
+# Standard Library Imports
+import logging
+
+# Third-party Imports
 import pandas as pd
 
+logger = logging.getLogger(__name__)
 
-def run_logit_inference(model, X_infer: pd.DataFrame) -> pd.DataFrame:
+
+def run_logit_inference(model, X_infer: pd.DataFrame, optimal_threshold: float) -> pd.DataFrame:
     """
     Inputs:
     - model: fitted sklearn Pipeline (includes preprocessing + estimator)
@@ -27,30 +32,13 @@ def run_logit_inference(model, X_infer: pd.DataFrame) -> pd.DataFrame:
     - A stable prediction output reduces integration bugs and keeps
     batch/online serving consistent.
     """
-    print("run_inference: generating predictions")
-    # TODO: replace with logging later
+    logger.info("Generating predictions")
 
-    preds = model.predict(X_infer)
+    y_proba = model.predict_proba(X_infer)[:, 1]
+    y_pred = (y_proba >= optimal_threshold).astype(int)
 
-    # --------------------------------------------------------
-    # START STUDENT CODE
-    # --------------------------------------------------------
-    # TODO_STUDENT: Paste your notebook logic here to replace or extend
-    # Why: Some products require probabilities, thresholds,
-    # or post-processing rules.
-    # Examples:
-    # 1. For classification, return probabilities via model.predict_proba
-    # (but keep output format stable)
-    # 2. Apply a business threshold to convert probabilities to labels
-    #
-    # Optional forcing function (leave commented)
-    # raise NotImplementedError("Student: You must implement this logic to
-    # proceed!")
-    #
-    # Placeholder (Remove this after implementing your code):
-    print("Warning: Student has not implemented this section yet")
-    # --------------------------------------------------------
-    # END STUDENT CODE
-    # --------------------------------------------------------
+    result = X_infer.copy()
+    result["prediction"] = y_pred
+    result["predict_proba"] = y_proba
 
-    return pd.DataFrame({"prediction": preds}, index=X_infer.index)
+    return result

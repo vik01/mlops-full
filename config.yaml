@@ -1,10 +1,55 @@
-# MLOps Project Configuration
-# This file will eventually control paths, hyperparameters, and toggles.
+paths:
+  raw_data: "data/raw/train.csv"
+  processed_data: "data/processed/clean.csv"
+  kmeans_model: "models/kmeans_model.joblib"
+  logit_model: "models/logit_model.joblib"
+  dtrees_model: "models/dtrees_model.joblib"
+  kmeans_predictions: "reports/kmeans_predictions.csv"
+  logit_predictions: "reports/logit_predictions.csv"
+  dtrees_predictions: "reports/dtrees_predictions.csv"
+  log_file: "logs/pipeline.log"
+  inference_data: "data/inference"
 
-data:
-  raw: "data/raw/dataset.csv"
-  processed: "data/processed/clean.csv"
+logging:
+  level: "INFO"
 
-train:
+validation:
+  max_null_rate: 0.1
+  binary_columns: ["Sex", "FBS over 120", "Exercise angina"]
+  age_min: 0
+  age_max: 120
+
+problem:
+  target_column: "Heart Disease"
+  problem_type: "classification"
+  valid_targets: ["Presence", "Absence"]
+
+split:
   test_size: 0.2
-  seed: 42
+  random_state: 42
+
+training:
+  k_means_bins: 3
+  max_iterations: 2000
+
+features:
+  quantile_bin: []
+  categorical_onehot: []
+  numeric_passthrough:
+    - "id"
+    - "Sex"
+    - "FBS over 120"
+    - "EKG results"
+    - "Exercise angina"
+    - "ST depression"
+  ordinal_encode:
+    - "Chest pain type"
+    - "Number of vessels fluro"
+    - "Thallium"
+    - "Slope of ST"
+  min_max_scaler:
+    - "Age"
+    - "BP"
+    - "Cholesterol"
+    - "Max HR"
+  n_bins: 3

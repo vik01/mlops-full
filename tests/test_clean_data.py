@@ -67,13 +67,13 @@ def test_target_column_is_preserved_when_present():
     assert cleaned["Heart Disease"].tolist() == ["Presence", "Absence"]
 
 
-def test_prints_warning_when_target_missing(capsys):
+def test_prints_warning_when_target_missing(caplog):
     df_raw = pd.DataFrame({"A": [1, 2], "B": [3, 4]})
 
-    cleaned = clean_dataframe(df_raw, target_column="Heart Disease")
-    captured = capsys.readouterr()
+    with caplog.at_level("WARNING"):
+        cleaned = clean_dataframe(df_raw, target_column="Heart Disease")
 
-    assert "Warning: target_column='Heart Disease' not found" in captured.out
+    assert "target_column='Heart Disease' not found" in caplog.text
     assert cleaned.shape[0] == 2
 
 

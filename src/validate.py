@@ -1,11 +1,39 @@
 """
-TODO: Replace print statements with standard library logging in a
-     later session
 TODO: Any temporary or hardcoded variable or parameter will be
      imported from config.yml in a later session
 """
 
+# Standard Library Imports
+import logging
+from pathlib import Path
+
+# Third-party Imports
 import pandas as pd
+
+# Local Module Imports 
+from utils import load_config, require_section, require_str 
+from utils import require_float, require_int, require_list
+
+logger = logging.getLogger(__name__)
+project_root = Path(__file__).resolve().parents[1]
+
+# -----------------------------
+# Load and validate config.yaml
+# -----------------------------
+cfg = load_config(project_root / "config.yaml")
+
+# Load required sections from config file
+paths_cfg = require_section(cfg, "paths")
+validation_cfg = require_section(cfg, "validation")
+problem_cfg = require_section(cfg, "problem")
+
+# Get configurations
+TARGET_COLUMN = require_str(problem_cfg, "target_column")
+VALID_TARGETS = require_list(problem_cfg, "valid_targets")
+MAX_NULL_RATE = require_float(validation_cfg, "max_null_rate")
+BINARY_COLUMNS = require_list(validation_cfg, "binary_columns")
+AGE_MIN = require_int(validation_cfg, "age_min")
+AGE_MAX = require_int(validation_cfg, "age_max")
 
 
 def validate_dataframe(df: pd.DataFrame, required_columns: list) -> bool:
@@ -18,8 +46,7 @@ def validate_dataframe(df: pd.DataFrame, required_columns: list) -> bool:
     - Raises ValueError if the DataFrame misses required columns, has too many
       nulls, contains unexpected target values, or fails any other checks.
     """
-    print("[validate] Running data validation checks...")
-    # TODO: replace with logging later
+    logger.info("Running data validation checks...")
 
     # ------------------------------------------------------------------
     # CHECK 1: DataFrame must not be empty
@@ -49,7 +76,7 @@ def validate_dataframe(df: pd.DataFrame, required_columns: list) -> bool:
     # any column)
     # ------------------------------------------------------------------
     null_rates = df.isnull().mean()
-    high_null_cols = null_rates[null_rates > 0.1].index.tolist()
+    high_null_cols = null_rates[null_rates > MAX_NULL_RATE].index.tolist()
     if high_null_cols:
         raise ValueError(
             f"[validate] The following columns have more than 10% "
@@ -61,14 +88,13 @@ def validate_dataframe(df: pd.DataFrame, required_columns: list) -> bool:
     # CHECK 4: Check that the target column contains only expected
     # values
     # ------------------------------------------------------------------
-    valid_targets = ["Presence", "Absence"]
-    unexpected = (set(df["Heart Disease"].unique()) -
-                  set(valid_targets))
+    unexpected = (set(df[TARGET_COLUMN].unique()) -
+                  set(VALID_TARGETS))
     if unexpected:
         raise ValueError(
-            f"[validate] Unexpected target values in 'Heart Disease' "
+            f"[validate] Unexpected target values in '{TARGET_COLUMN}' "
             f"column: {unexpected}\n"
-            f"Expected values are: {valid_targets}"
+            f"Expected values are: {VALID_TARGETS}"
         )
 
     # ------------------------------------------------------------------
@@ -98,7 +124,7 @@ def validate_dataframe(df: pd.DataFrame, required_columns: list) -> bool:
     # CHECK 7: Binary columns must contain only 0 or 1
     # 'Sex', 'FBS over 120', and 'Exercise angina' are binary flags.
     # ------------------------------------------------------------------
-    binary_cols = ["Sex", "FBS over 120", "Exercise angina"]
+    binary_cols = BINARY_COLUMNS
     valid_binary = {0, 1}
     for col in binary_cols:
         if col in df.columns:
@@ -115,24 +141,19 @@ def validate_dataframe(df: pd.DataFrame, required_columns: list) -> bool:
     # CHECK 8: Age must be within a medically plausible range (0–120)
     # ------------------------------------------------------------------
     if "Age" in df.columns:
-        age_min, age_max = 0, 120
-        out_of_range = df[(df["Age"] < age_min) |
-                          (df["Age"] > age_max)]
+        out_of_range = df[(df["Age"] < AGE_MIN) |
+                          (df["Age"] > AGE_MAX)]
         if not out_of_range.empty:
             raise ValueError(
                 f"[validate] 'Age' column contains {len(out_of_range)} "
                 f"value(s) outside the expected range "
-                f"[{age_min}, {age_max}].\n"
+                f"[{AGE_MIN}, {AGE_MAX}].\n"
                 "Check your raw data source for data entry errors."
             )
 
     rows, cols = df.shape
-    print(f"[validate]   Shape: {rows} rows x {cols} columns.")
-    # TODO: replace with logging later
-    print(f"[validate]   All {len(required_columns)} required "
-          f"columns present.")
-    # TODO: replace with logging later
-    print("[validate] Validation passed.")
-    # TODO: replace with logging later
+    logger.info("Shape: %d rows x %d columns.", rows, cols)
+    logger.info("All %d required columns present.", len(required_columns))
+    logger.info("Validation passed.")
 
     return True

@@ -4,12 +4,17 @@ Educational Goal:
 - Responsibility (separation of concerns): Compute silhouette score.
 - Pipeline contract (inputs and outputs): model + X_test -> float.
 
-TODO: Replace print statements with standard library logging in a later session
 """
 
+# Standard Library Imports
+import logging
+
+# Third-party Imports
 import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import silhouette_score
+
+logger = logging.getLogger(__name__)
 
 
 def evaluate_kmeans_model(model: Pipeline, X_test: pd.DataFrame) -> float:
@@ -23,15 +28,14 @@ def evaluate_kmeans_model(model: Pipeline, X_test: pd.DataFrame) -> float:
     - Provides a quantitative signal of clustering quality.
     """
 
-    # TODO: replace with logging later
-    print("[kmeans.evaluate] Evaluating silhouette score")
+    logger.info("Evaluating silhouette score")
 
     X_trans = model.named_steps["preprocess"].transform(X_test)
     labels = model.named_steps["model"].predict(X_trans)
 
     # Guard against invalid silhouette conditions
     if len(set(labels)) < 2 or len(X_trans) < 3:
-        print("Not enough samples or clusters for silhouette. Returning 0.0")
+        logger.warning("Not enough samples or clusters for silhouette. Returning 0.0")
         return 0.0
 
     # ============================================================

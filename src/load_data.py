@@ -1,14 +1,19 @@
 """
-TODO: Replace print statements with standard library logging in a later
-      session
 TODO: Any temporary or hardcoded variable or parameter will be imported
       from config.yml in a later session
 """
 
+# Standard Library Imports
+import logging
 from pathlib import Path
+
+# Third-party Imports
 import pandas as pd
 
-from src.utils import load_csv
+# Local Module Imports
+from utils import load_csv
+
+logger = logging.getLogger(__name__)
 
 
 def load_raw_data(raw_data_path: Path) -> pd.DataFrame:
@@ -19,8 +24,7 @@ def load_raw_data(raw_data_path: Path) -> pd.DataFrame:
     Outputs:
     - df_raw: DataFrame containing raw data
     """
-    print(f"[load_data.load_raw_data] Loading raw data from: {raw_data_path}")
-    # TODO: replace with logging later
+    logger.info("Loading raw data from: %s", raw_data_path)
 
     # NOTE: src.utils.load_csv() will raise a
     #       FileNotFoundError if the file doesn't exist.

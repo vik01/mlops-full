@@ -1,12 +1,13 @@
 """
-TODO: Replace print statements with standard library logging in a later
-     session
 TODO: Any temporary or hardcoded variable or parameter will be imported from
       config.yml in a later session
 """
 
+# Standard Library Imports
+import logging
 from typing import Optional, List
 
+# Third-party Imports
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import (
     KBinsDiscretizer,
@@ -14,6 +15,8 @@ from sklearn.preprocessing import (
     MinMaxScaler,
     OrdinalEncoder,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def get_feature_preprocessor(
@@ -44,8 +47,7 @@ def get_feature_preprocessor(
       transformations.
     """
 
-    # TODO: replace with logging later
-    print("[features] Building feature preprocessor recipe...")
+    logger.info("Building feature preprocessor recipe...")
 
     # Apply defaults: treat None as empty list
     quantile_bin_cols = quantile_bin_cols or []
