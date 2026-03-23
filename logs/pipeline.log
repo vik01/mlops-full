@@ -241,3 +241,85 @@ weighted avg     0.8554    0.8548    0.8549    126000
 2026-03-22 21:28:59 | INFO | __main__ |   Processed data : C:\Users\vikyb\Desktop\IE-Folder\ml\MLOps\mlops-full\data\processed\clean.csv
 2026-03-22 21:28:59 | INFO | __main__ |   Model artifact : C:\Users\vikyb\Desktop\IE-Folder\ml\MLOps\mlops-full\models\logit_model.joblib
 2026-03-22 21:28:59 | INFO | __main__ |   Predictions    : C:\Users\vikyb\Desktop\IE-Folder\ml\MLOps\mlops-full\reports\kmeans_predictions.csv
+2026-03-23 15:03:39 | INFO | __main__ | Creating output directories if they do not exist...
+2026-03-23 15:03:45 | INFO | __main__ | Initialized W&B run | name=kind-vortex-1 | project=heart-disease-mlops
+2026-03-23 15:03:45 | INFO | __main__ | Step 1 — Loading raw data...
+2026-03-23 15:03:45 | INFO | load_data | Loading raw data from: C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\data\raw\train.csv
+2026-03-23 15:03:45 | INFO | utils | Loading CSV from: C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\data\raw\train.csv
+2026-03-23 15:03:47 | INFO | utils | Loaded 630000 rows x 15 columns.
+2026-03-23 15:03:47 | INFO | __main__ | Step 2 — Cleaning data...
+2026-03-23 15:03:47 | INFO | clean_data | Cleaning raw dataframe...
+2026-03-23 15:03:47 | INFO | __main__ | Step 3 — Saving processed CSV...
+2026-03-23 15:03:47 | INFO | utils | Saving CSV to: C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\data\processed\clean.csv
+2026-03-23 15:03:51 | INFO | utils | Saved 630000 rows to C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\data\processed\clean.csv
+2026-03-23 15:03:51 | INFO | __main__ | Step 4 — Validating cleaned data...
+2026-03-23 15:03:51 | INFO | validate | Running data validation checks...
+2026-03-23 15:03:51 | INFO | validate | Shape: 630000 rows x 15 columns.
+2026-03-23 15:03:51 | INFO | validate | All 15 required columns present.
+2026-03-23 15:03:51 | INFO | validate | Validation passed.
+2026-03-23 15:03:51 | INFO | __main__ | Step 5 — Splitting into train and test sets...
+2026-03-23 15:03:52 | INFO | __main__ | Train size: 504000 rows | Test size: 126000 rows
+2026-03-23 15:03:52 | INFO | __main__ | Step 6 — Verifying feature columns exist in training data
+2026-03-23 15:03:52 | INFO | __main__ | Step 7 — Building feature preprocessor recipe...
+2026-03-23 15:03:52 | INFO | features | Building feature preprocessor recipe...
+2026-03-23 15:03:52 | INFO | __main__ | Step 8 — Training model...
+2026-03-23 15:03:52 | INFO | kmeans.kmeans_train | Training KMeans Pipeline
+2026-03-23 15:04:09 | INFO | dtrees.dtrees_train | Building Decision Tree pipeline...
+2026-03-23 15:04:09 | INFO | dtrees.dtrees_train | Fitting on 504000 samples...
+2026-03-23 15:04:16 | INFO | dtrees.dtrees_train | Training complete.
+2026-03-23 15:04:16 | INFO | logit_regression.logit_train | Fitting model Pipeline (preprocess -> estimator)
+2026-03-23 15:06:32 | INFO | __main__ | Step 9 — Saving model artifact...
+2026-03-23 15:06:32 | INFO | utils | Saving model to: C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\models\kmeans_model.joblib
+2026-03-23 15:06:32 | INFO | utils | Model saved to C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\models\kmeans_model.joblib
+2026-03-23 15:06:32 | INFO | utils | Saving model to: C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\models\dtrees_model.joblib
+2026-03-23 15:06:32 | INFO | utils | Model saved to C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\models\dtrees_model.joblib
+2026-03-23 15:06:32 | INFO | utils | Saving model to: C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\models\logit_model.joblib
+2026-03-23 15:06:32 | INFO | utils | Model saved to C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\models\logit_model.joblib
+2026-03-23 15:06:34 | INFO | __main__ | Step 10 — Evaluating model on test set...
+2026-03-23 15:06:34 | INFO | kmeans.kmeans_evaluate | Evaluating silhouette score
+2026-03-23 15:06:34 | INFO | __main__ | Kmeans Metrics F1 (weighted): 0.5996
+2026-03-23 15:06:34 | INFO | dtrees.dtrees_eval | Running predictions on test set...
+2026-03-23 15:06:38 | INFO | dtrees.dtrees_eval | Classification Report:
+              precision    recall  f1-score   support
+
+     Absence     0.8774    0.8563    0.8668     69509
+    Presence     0.8283    0.8528    0.8404     56491
+
+    accuracy                         0.8548    126000
+   macro avg     0.8529    0.8546    0.8536    126000
+weighted avg     0.8554    0.8548    0.8549    126000
+
+2026-03-23 15:06:42 | INFO | dtrees.dtrees_eval | Metrics Summary:
+2026-03-23 15:06:42 | INFO | dtrees.dtrees_eval |   TP                        48177
+2026-03-23 15:06:42 | INFO | dtrees.dtrees_eval |   TN                        59522
+2026-03-23 15:06:42 | INFO | dtrees.dtrees_eval |   FP                        9987
+2026-03-23 15:06:42 | INFO | dtrees.dtrees_eval |   FN                        8314
+2026-03-23 15:06:42 | INFO | dtrees.dtrees_eval |   Accuracy                  0.8547539682539682
+2026-03-23 15:06:42 | INFO | dtrees.dtrees_eval |   Precision                 0.8282958531050134
+2026-03-23 15:06:42 | INFO | dtrees.dtrees_eval |   Recall                    0.8528261138942487
+2026-03-23 15:06:42 | INFO | dtrees.dtrees_eval |   Specificity               0.8563207642175833
+2026-03-23 15:06:42 | INFO | dtrees.dtrees_eval |   F1-score                  0.8403820156120535
+2026-03-23 15:06:42 | INFO | dtrees.dtrees_eval |   False Positive Rate       0.14367923578241668
+2026-03-23 15:06:42 | INFO | dtrees.dtrees_eval | F1 Score: 0.8404
+2026-03-23 15:06:42 | INFO | __main__ | Decision Tree Metrics F1 (weighted): 0.8403820156120535
+2026-03-23 15:06:42 | INFO | logit_regression.logit_evaluate | Evaluating model on held-out test set
+2026-03-23 15:06:42 | INFO | logit_regression.logit_evaluate | ROC curve saved to C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\data\inference\logit_roc.jpg
+2026-03-23 15:06:43 | INFO | logit_regression.logit_evaluate | Confusion matrix saved to C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\data\inference\logit_optimal_roc.jpg
+2026-03-23 15:06:43 | INFO | logit_regression.logit_evaluate | Coefficients chart saved to C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\data\inference\logit_coefficients.jpg
+2026-03-23 15:06:43 | INFO | __main__ | Logistic Regression Metrics F1 (weighted): {'TP': 49683, 'TN': 61630, 'FP': 7879, 'FN': 6808, 'Accuracy': 0.883436507936508, 'Precision': 0.8631215037698482, 'Recall': 0.8794852277353915, 'Specificity': 0.8866477722309342, 'F1-score': 0.8712265350319588, 'False Positive Rate': 0.11335222776906588, 'optimal_threshold': np.float64(0.4344254970650366)}
+2026-03-23 15:06:43 | INFO | __main__ | Step 11 — Running inference on example rows...
+2026-03-23 15:06:43 | INFO | kmeans.kmeans_infer | Predicting cluster_id
+2026-03-23 15:06:43 | INFO | dtrees.dtrees_infer | Running inference on 5 rows...
+2026-03-23 15:06:43 | INFO | dtrees.dtrees_infer | Inference complete.
+2026-03-23 15:06:43 | INFO | logit_regression.logit_infer | Generating predictions
+2026-03-23 15:06:43 | INFO | __main__ | Step 12 — Saving predictions CSV...
+2026-03-23 15:06:43 | INFO | utils | Saving CSV to: C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\reports\kmeans_predictions.csv
+2026-03-23 15:06:43 | INFO | utils | Saved 5 rows to C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\reports\kmeans_predictions.csv
+2026-03-23 15:06:43 | INFO | utils | Saving CSV to: C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\reports\dtrees_predictions.csv
+2026-03-23 15:06:43 | INFO | utils | Saved 5 rows to C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\reports\dtrees_predictions.csv
+2026-03-23 15:06:43 | INFO | utils | Saving CSV to: C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\reports\logit_predictions.csv
+2026-03-23 15:06:43 | INFO | utils | Saved 5 rows to C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\reports\logit_predictions.csv
+2026-03-23 15:06:43 | INFO | __main__ | Pipeline complete!
+2026-03-23 15:06:43 | INFO | __main__ |   Processed data : C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\data\processed\clean.csv
+2026-03-23 15:06:43 | INFO | __main__ |   Model artifact : C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\models\logit_model.joblib
+2026-03-23 15:06:43 | INFO | __main__ |   Predictions    : C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\reports\kmeans_predictions.csv
