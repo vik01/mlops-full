@@ -57,7 +57,7 @@ features:
 wandb:
   enabled: true
   project: "heart-disease-mlops"
-  entity: ""
-  model_artifact_name: "heart_disease_model"
+  entity: "WANDB_ENTITY"
+  model_artifact_name: "heart_disease_model_logit"
   log_processed_data: true
   log_predictions: true
