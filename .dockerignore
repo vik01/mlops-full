@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.github/
+.vscode/
+.pytest_cache/
+data/
+notebooks/
+reports/
+tests/
+wandb/
+logs/
+.env
+models/
