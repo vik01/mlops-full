@@ -27,6 +27,7 @@ jobs:
       - name: Install conda-lock and create exact environment
         shell: bash -el {0}
         run: |
+          conda activate base
           conda install -n base -c conda-forge conda-lock -y
           conda-lock install --name Heart_Disease_Prediction conda-lock.yml
 
