@@ -53,3 +53,11 @@ features:
     - "Cholesterol"
     - "Max HR"
   n_bins: 3
+
+wandb:
+  enabled: true
+  project: "heart-disease-mlops"
+  entity: ""
+  model_artifact_name: "heart_disease_model"
+  log_processed_data: true
+  log_predictions: true
