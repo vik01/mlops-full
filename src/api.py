@@ -189,10 +189,13 @@ def predict(request: PredictionRequest):
         if "predict_proba" not in preds_df.columns:
             raise ValueError("Inference output does not contain 'predict_proba' column.")
 
-        return PredictionResponse(
+        response = PredictionResponse(
             predictions=preds_df["prediction"].astype(int).tolist(),
             probabilities=preds_df["predict_proba"].astype(float).tolist(),
         )
+        logger.info("Prediction request: %d records → %d predictions",
+                    len(df), len(response.predictions))
+        return response
 
     except ValueError as exc:
         logger.error("Prediction validation failed: %s", exc)
