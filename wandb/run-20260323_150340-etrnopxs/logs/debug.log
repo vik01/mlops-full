@@ -1,0 +1,24 @@
+2026-03-23 15:03:40,726 INFO    MainThread:33588 [wandb_setup.py:_flush():81] Current SDK version is 0.25.1
+2026-03-23 15:03:40,727 INFO    MainThread:33588 [wandb_setup.py:_flush():81] Configure stats pid to 33588
+2026-03-23 15:03:40,727 INFO    MainThread:33588 [wandb_setup.py:_flush():81] Loading settings from environment variables
+2026-03-23 15:03:40,728 INFO    MainThread:33588 [wandb_init.py:setup_run_log_directory():717] Logging user logs to C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\wandb\run-20260323_150340-etrnopxs\logs\debug.log
+2026-03-23 15:03:40,728 INFO    MainThread:33588 [wandb_init.py:setup_run_log_directory():718] Logging internal logs to C:\Users\alvde\Desktop\MASTER\TERM 2\MLOPS\GROUP ASSIGMENT\mlops-full\wandb\run-20260323_150340-etrnopxs\logs\debug-internal.log
+2026-03-23 15:03:40,728 INFO    MainThread:33588 [wandb_init.py:init():844] calling init triggers
+2026-03-23 15:03:40,729 INFO    MainThread:33588 [wandb_init.py:init():849] wandb.init called with sweep_config: {}
+config: {'paths': {'raw_data': 'data/raw/train.csv', 'processed_data': 'data/processed/clean.csv', 'kmeans_model': 'models/kmeans_model.joblib', 'logit_model': 'models/logit_model.joblib', 'dtrees_model': 'models/dtrees_model.joblib', 'kmeans_predictions': 'reports/kmeans_predictions.csv', 'logit_predictions': 'reports/logit_predictions.csv', 'dtrees_predictions': 'reports/dtrees_predictions.csv', 'log_file': 'logs/pipeline.log', 'inference_data': 'data/inference'}, 'logging': {'level': 'INFO'}, 'validation': {'max_null_rate': 0.1, 'binary_columns': ['Sex', 'FBS over 120', 'Exercise angina'], 'age_min': 0, 'age_max': 120}, 'problem': {'target_column': 'Heart Disease', 'problem_type': 'classification', 'valid_targets': ['Presence', 'Absence']}, 'split': {'test_size': 0.2, 'random_state': 42}, 'training': {'k_means_bins': 3, 'max_iterations': 2000}, 'features': {'quantile_bin': [], 'categorical_onehot': [], 'numeric_passthrough': ['id', 'Sex', 'FBS over 120', 'EKG results', 'Exercise angina', 'ST depression'], 'ordinal_encode': ['Chest pain type', 'Number of vessels fluro', 'Thallium', 'Slope of ST'], 'min_max_scaler': ['Age', 'BP', 'Cholesterol', 'Max HR'], 'n_bins': 3}, 'wandb': {'enabled': True, 'project': 'heart-disease-mlops', 'entity': '', 'model_artifact_name': 'heart_disease_model', 'log_processed_data': True, 'log_predictions': True}, '_wandb': {}}
+2026-03-23 15:03:40,729 INFO    MainThread:33588 [wandb_init.py:init():892] starting backend
+2026-03-23 15:03:43,488 INFO    MainThread:33588 [wandb_init.py:init():895] sending inform_init request
+2026-03-23 15:03:43,557 INFO    MainThread:33588 [wandb_init.py:init():903] backend started and connected
+2026-03-23 15:03:43,558 INFO    MainThread:33588 [wandb_init.py:init():973] updated telemetry
+2026-03-23 15:03:43,678 INFO    MainThread:33588 [wandb_init.py:init():997] communicating run to backend with 90.0 second timeout
+2026-03-23 15:03:45,603 INFO    MainThread:33588 [wandb_init.py:init():1042] starting run threads in backend
+2026-03-23 15:03:45,748 INFO    MainThread:33588 [wandb_run.py:_console_start():2524] atexit reg
+2026-03-23 15:03:45,748 INFO    MainThread:33588 [wandb_run.py:_redirect():2373] redirect: wrap_raw
+2026-03-23 15:03:45,748 INFO    MainThread:33588 [wandb_run.py:_redirect():2442] Wrapping output streams.
+2026-03-23 15:03:45,749 INFO    MainThread:33588 [wandb_run.py:_redirect():2465] Redirects installed.
+2026-03-23 15:03:45,756 INFO    MainThread:33588 [wandb_init.py:init():1082] run started, returning control to user process
+2026-03-23 15:06:43,877 INFO    MainThread:33588 [wandb_run.py:_finish():2291] finishing run teresa-alvarez-ie-university/heart-disease-mlops/etrnopxs
+2026-03-23 15:06:43,878 INFO    MainThread:33588 [wandb_run.py:_atexit_cleanup():2490] got exitcode: 0
+2026-03-23 15:06:43,878 INFO    MainThread:33588 [wandb_run.py:_restore():2472] restore
+2026-03-23 15:06:43,878 INFO    MainThread:33588 [wandb_run.py:_restore():2478] restore done
+2026-03-23 15:06:45,177 INFO    MainThread:33588 [wandb_run.py:_footer_sync_info():3868] logging synced files

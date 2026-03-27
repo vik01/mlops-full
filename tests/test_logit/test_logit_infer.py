@@ -46,10 +46,14 @@ def test_run_inference_output_format():
     )
 
     X_infer = X.head(2).copy()
-    preds_df = run_logit_inference(model=model, X_infer=X_infer)
+    preds_df = run_logit_inference(model=model, 
+                                   X_infer=X_infer,
+                                   optimal_threshold=0.5)
 
     assert isinstance(preds_df, pd.DataFrame)
-    assert list(preds_df.columns) == ["prediction"]
-    # must be exactly one column with this name
-    assert preds_df.index.equals(X_infer.index)      # must preserve index
+    assert "num_feature" in preds_df.columns
+    assert "cat_feature" in preds_df.columns
+    assert "prediction" in preds_df.columns
+    assert "predict_proba" in preds_df.columns
+    assert preds_df.index.equals(X_infer.index)
     assert len(preds_df) == len(X_infer)

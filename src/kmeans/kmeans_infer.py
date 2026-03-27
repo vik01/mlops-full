@@ -6,11 +6,15 @@ Educational Goal:
 - Pipeline contract (inputs and outputs): model + X -> DataFrame with
   one column 'prediction'.
 
-TODO: Replace print statements with standard library logging in a
-later session
 """
 
+# Standard Library Imports
+import logging
+
+# Third-party Imports
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 def run_kmeans_inference(model, X_infer: pd.DataFrame) -> pd.DataFrame:
@@ -23,7 +27,7 @@ def run_kmeans_inference(model, X_infer: pd.DataFrame) -> pd.DataFrame:
     Why this contract matters for reliable ML delivery:
     - Stable output schema prevents downstream breakage.
     """
-    print("[kmeans.infer] Predicting cluster_id")  # TODO
+    logger.info("Predicting cluster_id")
 
     preds = model.predict(X_infer)
     return pd.DataFrame({"prediction": preds}, index=X_infer.index)

@@ -12,12 +12,24 @@ into a "model-ready" table (still tabular),
   Inputs : raw pandas DataFrame + target column name
   Outputs: cleaned pandas DataFrame (same target column retained)
 
-TODO: Replace print statements with standard library logging in a later session
 TODO: Any temporary or hardcoded variable or parameter will be imported from
 config.yml in a later session
 """
 
+# Standard Library Imports
+import logging
+from pathlib import Path
+
+# Third-party Imports
 import pandas as pd
+
+# Local Imports
+from utils import load_config
+
+_cfg = load_config(Path(__file__).resolve().parents[1] / "config.yaml")
+_DROP_COL = _cfg.get("features", {}).get("drop_col")
+
+logger = logging.getLogger(__name__)
 
 
 def clean_dataframe(df_raw: pd.DataFrame, target_column: str) -> pd.DataFrame:
@@ -36,8 +48,7 @@ def clean_dataframe(df_raw: pd.DataFrame, target_column: str) -> pd.DataFrame:
       remain unchanged even as cleaning logic evolves per dataset or business
       rules.
     """
-    print("[clean_data] Cleaning raw dataframe...")
-    # TODO: replace with logging later
+    logger.info("Cleaning raw dataframe...")
 
     if df_raw is None:
         raise ValueError(
@@ -54,6 +65,8 @@ def clean_dataframe(df_raw: pd.DataFrame, target_column: str) -> pd.DataFrame:
 
     df_clean = df_clean.dropna(how="all")
     df_clean = df_clean.drop_duplicates()
+    if _DROP_COL and _DROP_COL in df_clean.columns:
+        df_clean = df_clean.drop(columns=_DROP_COL)
 
     # Minimal contract visibility: ensure we didn't accidentally drop the
     # target silently.
@@ -61,9 +74,10 @@ def clean_dataframe(df_raw: pd.DataFrame, target_column: str) -> pd.DataFrame:
     # columns),
     # but we print a helpful warning for students.
     if target_column not in df_clean.columns:
-        print(
-            f"[clean_data] Warning: target_column='{target_column}' not found"
-            "Downstream validation will likely fail if this is unintended."
-        )  # TODO: replace with logging later
+        logger.warning(
+            "target_column='%s' not found. "
+            "Downstream validation will likely fail if this is unintended.",
+            target_column,
+        )
 
     return df_clean

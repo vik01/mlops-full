@@ -52,4 +52,10 @@ def test_evaluate_model_returns_float_classification():
         prob_type="classification",
     )
 
-    assert isinstance(metric_value, float)
+    assert isinstance(metric_value, dict)
+    assert "Accuracy" in metric_value
+    assert "Precision" in metric_value
+    assert "Recall" in metric_value
+    assert "F1-score" in metric_value
+    assert "Specificity" in metric_value
+    assert "False Positive Rate" in metric_value

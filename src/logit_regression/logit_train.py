@@ -7,15 +7,20 @@ Educational Goal:
 - Pipeline contract (inputs and outputs): Inputs are X_train, y_train, a
     preprocessor recipe, and problem_type; output is a fitted sklearn Pipeline.
 
-TODO: Replace print statements with standard library logging in a later session
 TODO: Any temporary or hardcoded variable or parameter will be imported from
 config.yml in a later session
 """
 
+# Standard Library Imports
+import logging
+
+# Third-party Imports
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, LogisticRegression
+
+logger = logging.getLogger(__name__)
 
 
 def train_logit_model(
@@ -51,9 +56,7 @@ def train_logit_model(
     if not isinstance(max_iterations, int):
         raise TypeError("max_iterations must be an int")
 
-    print("""[logit_train.logit_train]  Fitting model Pipeline
-          (preprocess -> estimator)""")
-    # TODO: replace with logging later
+    logger.info("Fitting model Pipeline (preprocess -> estimator)")
 
     if problem_type not in ["regression", "classification"]:
         raise ValueError(
@@ -62,31 +65,11 @@ def train_logit_model(
         )
 
     estimator = (
-        Ridge()
+        Ridge(solver='auto', random_state=random_state)
         if problem_type == "regression"
         else LogisticRegression(random_state=random_state,
                                 max_iter=max_iterations)
     )
-
-    # --------------------------------------------------------
-    # START STUDENT CODE
-    # --------------------------------------------------------
-    # TODO_STUDENT: Paste your notebook logic here to replace or extend
-    # Why: Hyperparameters depend on dataset size, imbalance, and business
-    # goals.
-    # Examples:
-    # 1. LogisticRegression(class_weight="balanced")
-    # 2. LogisticRegression(C=0.5, solver="liblinear")
-    #
-    # Optional forcing function (leave commented)
-    # raise NotImplementedError("Student: You must implement this logic to
-    # proceed!")
-    #
-    # Placeholder (Remove this after implementing your code):
-    print("Warning: Student has not implemented this section yet")
-    # --------------------------------------------------------
-    # END STUDENT CODE
-    # --------------------------------------------------------
 
     model = Pipeline(
         steps=[

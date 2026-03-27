@@ -15,11 +15,14 @@ Educational Goal:
 - Pipeline contract (inputs and outputs): Takes fitted model and test data,
     returns a single float so main.py can log it consistently.
 
-TODO: Replace print statements with standard library logging in a later session
 TODO: Any temporary or hardcoded variable or parameter will be imported from
 config.yml in a later session
 """
 
+# Standard Library Imports
+import logging
+
+# Third-party Imports
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -28,6 +31,8 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def calculate_metrics(cm, y_true, y_pred):
@@ -77,8 +82,7 @@ def evaluate_dtrees_model(model, X_test, y_test, prob_type):
     - Returning one float lets main.py log and compare all three models
       (Decision Tree, Logistic Regression, K-Means) on the same scale.
     """
-    print("[dtrees_eval.evaluate_model] Running predictions on test set...")
-    # TODO: replace with logging later
+    logger.info("Running predictions on test set...")
 
     if prob_type not in ["regression", "classification"]:
         msg = (
@@ -94,16 +98,15 @@ def evaluate_dtrees_model(model, X_test, y_test, prob_type):
             f"[dtrees_eval.evaluate_model] Prediction failed: {exc}"
         ) from exc
 
-    # Full classification report printed to console for visibility
-    print("\n[dtrees_eval.evaluate_model] Classification Report:")
-    print(classification_report(y_test, y_pred, digits=4))
+    logger.info("Classification Report:\n%s",
+                classification_report(y_test, y_pred, digits=4))
 
     cm = confusion_matrix(y_test, y_pred, labels=["Absence", "Presence"])
     metrics = calculate_metrics(cm, y_test, y_pred)
 
-    print("[dtrees_eval.evaluate_model] Metrics Summary:")
+    logger.info("Metrics Summary:")
     for key, val in metrics.items():
-        print(f"  {key:<25} {val}")
+        logger.info("  %s %s", f"{key:<25}", val)
 
     # --------------------------------------------------------
     # START STUDENT CODE
@@ -125,7 +128,6 @@ def evaluate_dtrees_model(model, X_test, y_test, prob_type):
 
     # Return single float back to main.py
     metric_value = float(metrics["F1-score"])
-    print(f"\n[dtrees_eval.evaluate_model] F1 Score: {metric_value:.4f}")
-    # TODO: replace with logging later
+    logger.info("F1 Score: %.4f", metric_value)
 
     return metric_value

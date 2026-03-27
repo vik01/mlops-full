@@ -15,21 +15,29 @@ Educational Goal:
 - Pipeline contract (inputs and outputs): Takes training data and returns a
     fitted Pipeline that main.py can pass to evaluate and infer.
 
-TODO: Replace print statements with standard library logging in a later session
 TODO: Any temporary or hardcoded variable or parameter will be imported from
 config.yml in a later session
 """
 
+# Standard Library Imports
+import logging
+
+# Third-party Imports
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 
+logger = logging.getLogger(__name__)
+
 
 def train_dtrees_model(X_train: pd.DataFrame,
                        y_train: pd.Series,
                        preprocessor: ColumnTransformer,
-                       problem_type: str):
+                       problem_type: str,
+                       max_depth: int = 4,
+                       min_samples_leaf: int = 30,
+                       random_state: int = 42):
     """
     Inputs:
     - X_train: Feature matrix for training (pandas DataFrame).
@@ -52,8 +60,7 @@ def train_dtrees_model(X_train: pd.DataFrame,
     if not isinstance(problem_type, str):
         raise TypeError("problem_type must be a string")
 
-    print("[dtrees_train.train_model] Building Decision Tree pipeline...")
-    # TODO: replace with logging later
+    logger.info("Building Decision Tree pipeline...")
 
     if problem_type not in ["regression", "classification"]:
         raise ValueError(
@@ -61,12 +68,10 @@ def train_dtrees_model(X_train: pd.DataFrame,
             "regression or classification"
         )
 
-    # max_depth=4 and min_samples_leaf=30 from notebook Section 6.1.
-    # These values balance interpretability and accuracy (~85%).
     estimator = DecisionTreeClassifier(
-        max_depth=4,
-        min_samples_leaf=30,
-        random_state=42,
+        max_depth=max_depth,
+        min_samples_leaf=min_samples_leaf,
+        random_state=random_state,
     )
 
     pipeline = Pipeline([
@@ -74,8 +79,7 @@ def train_dtrees_model(X_train: pd.DataFrame,
         ("model", estimator),
     ])
 
-    print(f"[dtrees_train.train_model] Fitting on {len(X_train)} samples...")
-    # TODO: replace with logging later
+    logger.info("Fitting on %d samples...", len(X_train))
 
     try:
         pipeline.fit(X_train, y_train)
@@ -84,7 +88,6 @@ def train_dtrees_model(X_train: pd.DataFrame,
             f"[dtrees_train.train_model] Pipeline fitting failed: {exc}"
         ) from exc
 
-    print("[dtrees_train.train_model] Training complete.")
-    # TODO: replace with logging later
+    logger.info("Training complete.")
 
     return pipeline

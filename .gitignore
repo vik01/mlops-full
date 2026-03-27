@@ -43,3 +43,6 @@ data/*
 
 # pyright
 pyrightconfig.json
+
+# Weights and Biases
+wandb/
