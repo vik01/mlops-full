@@ -31,12 +31,18 @@ split:
 training:
   k_means_bins: 3
   max_iterations: 2000
+  n_init: 10
+  random_state: 42
+  max_depth: 4
+  min_samples_leaf: 30
+
+inference:
+  threshold: 0.5
 
 features:
   quantile_bin: []
   categorical_onehot: []
   numeric_passthrough:
-    - "id"
     - "Sex"
     - "FBS over 120"
     - "EKG results"
@@ -53,6 +59,7 @@ features:
     - "Cholesterol"
     - "Max HR"
   n_bins: 3
+  drop_col: "id"
 
 wandb:
   enabled: true

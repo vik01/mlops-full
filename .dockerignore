@@ -12,4 +12,9 @@ tests/
 wandb/
 logs/
 .env
+.env.example
 models/
+venv/
+artifacts/
+conftest.py
+pytest.ini

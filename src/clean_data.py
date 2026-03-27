@@ -18,9 +18,16 @@ config.yml in a later session
 
 # Standard Library Imports
 import logging
+from pathlib import Path
 
 # Third-party Imports
 import pandas as pd
+
+# Local Imports
+from utils import load_config
+
+_cfg = load_config(Path(__file__).resolve().parents[1] / "config.yaml")
+_DROP_COL = _cfg.get("features", {}).get("drop_col")
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +65,8 @@ def clean_dataframe(df_raw: pd.DataFrame, target_column: str) -> pd.DataFrame:
 
     df_clean = df_clean.dropna(how="all")
     df_clean = df_clean.drop_duplicates()
+    if _DROP_COL and _DROP_COL in df_clean.columns:
+        df_clean = df_clean.drop(columns=_DROP_COL)
 
     # Minimal contract visibility: ensure we didn't accidentally drop the
     # target silently.
