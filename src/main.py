@@ -119,6 +119,9 @@ def main():
     # train and split values
     MAX_ITERATIONS = require_int(training_cfg, "max_iterations")
     K_MEANS_BINS = require_int(training_cfg, "k_means_bins")
+    N_INIT = require_int(training_cfg, "n_init")
+    MAX_DEPTH = require_int(training_cfg, "max_depth")
+    MIN_SAMPLES_LEAF = require_int(training_cfg, "min_samples_leaf")
     RANDOM_STATE = require_int(split_cfg, "random_state")
     TEST_SIZE = require_float(split_cfg, "test_size")
     
@@ -320,12 +323,17 @@ def main():
         logger.info("Step 8 — Training model...")
         kmeans_model = train_kmeans_model(X_train=X_train,
                                         preprocessor=preprocessor,
-                                        n_clusters=K_MEANS_BINS)
+                                        n_clusters=K_MEANS_BINS,
+                                        random_state=RANDOM_STATE,
+                                        n_init=N_INIT)
 
         # dtrees train model
         dtrees_model = train_dtrees_model(X_train=X_train, y_train=y_train,
                                         preprocessor=preprocessor,
-                                        problem_type=PROBLEM_TYPE)
+                                        problem_type=PROBLEM_TYPE,
+                                        max_depth=MAX_DEPTH,
+                                        min_samples_leaf=MIN_SAMPLES_LEAF,
+                                        random_state=RANDOM_STATE)
 
         # logit train model
         logit_model = train_logit_model(X_train, y_train, preprocessor,

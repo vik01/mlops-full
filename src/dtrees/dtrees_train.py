@@ -34,7 +34,10 @@ logger = logging.getLogger(__name__)
 def train_dtrees_model(X_train: pd.DataFrame,
                        y_train: pd.Series,
                        preprocessor: ColumnTransformer,
-                       problem_type: str):
+                       problem_type: str,
+                       max_depth: int = 4,
+                       min_samples_leaf: int = 30,
+                       random_state: int = 42):
     """
     Inputs:
     - X_train: Feature matrix for training (pandas DataFrame).
@@ -65,12 +68,10 @@ def train_dtrees_model(X_train: pd.DataFrame,
             "regression or classification"
         )
 
-    # max_depth=4 and min_samples_leaf=30 from notebook Section 6.1.
-    # These values balance interpretability and accuracy (~85%).
     estimator = DecisionTreeClassifier(
-        max_depth=4,
-        min_samples_leaf=30,
-        random_state=42,
+        max_depth=max_depth,
+        min_samples_leaf=min_samples_leaf,
+        random_state=random_state,
     )
 
     pipeline = Pipeline([

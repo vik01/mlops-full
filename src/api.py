@@ -170,12 +170,8 @@ def _load_model_from_wandb_prod():
 
 
 def _get_optimal_threshold() -> float:
-    """
-    Return the decision threshold used for logistic regression inference.
-
-    Update this if your team stored a different optimal threshold during training.
-    """
-    return 0.5
+    """Return the decision threshold used for logistic regression inference."""
+    return float(cfg.get("inference", {}).get("threshold", 0.5))
 
 
 # -----------------------------

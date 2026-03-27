@@ -19,7 +19,10 @@ logger = logging.getLogger(__name__)
 
 
 def train_kmeans_model(X_train: pd.DataFrame,
-                       preprocessor: ColumnTransformer, n_clusters: int):
+                       preprocessor: ColumnTransformer,
+                       n_clusters: int,
+                       random_state: int = 42,
+                       n_init: int = 10):
     """
     Inputs:
     - X_train: Training features.
@@ -44,7 +47,7 @@ def train_kmeans_model(X_train: pd.DataFrame,
 
     model = Pipeline([
         ("preprocess", preprocessor),
-        ("model", KMeans(n_clusters=n_clusters, random_state=42, n_init=10))
+        ("model", KMeans(n_clusters=n_clusters, random_state=random_state, n_init=n_init))
     ])
 
     try:

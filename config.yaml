@@ -31,6 +31,13 @@ split:
 training:
   k_means_bins: 3
   max_iterations: 2000
+  n_init: 10
+  random_state: 42
+  max_depth: 4
+  min_samples_leaf: 30
+
+inference:
+  threshold: 0.5
 
 features:
   quantile_bin: []
