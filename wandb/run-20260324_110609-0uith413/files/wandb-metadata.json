@@ -1,0 +1,28 @@
+{
+  "os": "Windows-11-10.0.26200-SP0",
+  "python": "CPython 3.14.3",
+  "startedAt": "2026-03-24T10:06:09.085869Z",
+  "program": "D:\\IE\\MLOPS_repo\\mlops-full\\src\\main.py",
+  "codePath": "src\\main.py",
+  "codePathLocal": "src\\main.py",
+  "git": {
+    "remote": "https://github.com/vik01/mlops-full.git",
+    "commit": "ceec28044d63e1416125706ff84dbea4879a5c8b"
+  },
+  "email": "pengchongzhao1113@gmail.com",
+  "root": "D:\\IE\\MLOPS_repo\\mlops-full",
+  "host": "zpc",
+  "executable": "D:\\Anaconda\\envs\\Heart_Disease_Prediction\\python.exe",
+  "cpu_count": 8,
+  "cpu_count_logical": 16,
+  "disk": {
+    "/": {
+      "total": "353341796352",
+      "used": "315721461760"
+    }
+  },
+  "memory": {
+    "total": "16312639488"
+  },
+  "writerId": "ui7g3skbw3izt3ver9pnnlfgnyxw24vk"
+}
