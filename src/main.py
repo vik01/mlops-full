@@ -13,6 +13,7 @@ TODO: Any temporary or hardcoded variable or parameter will be imported from
 # 1. IMPORTS
 # ===========================================================================
 # Standard Library Imports
+import os
 from pathlib import Path
 import logging
 
@@ -104,7 +105,7 @@ def main():
 
     WANDB_ENABLED = bool(wandb_cfg.get("enabled", False))
     WANDB_PROJECT = str(wandb_cfg.get("project", "")).strip()
-    WANDB_ENTITY = str(wandb_cfg.get("entity", "")).strip()
+    WANDB_ENTITY = os.getenv("WANDB_ENTITY") or str(wandb_cfg.get("entity", "")).strip()
     WANDB_MODEL_ARTIFACT_NAME = str(
         wandb_cfg.get("model_artifact_name", "heart_disease_model")
     ).strip()
@@ -368,12 +369,12 @@ def main():
             wandb.log_artifact(dtrees_artifact)
 
             logit_artifact = wandb.Artifact(
-                name=f"{WANDB_MODEL_ARTIFACT_NAME}_logit",
+                name=WANDB_MODEL_ARTIFACT_NAME,
                 type="model",
                 description="Logistic Regression pipeline artifact",
             )
             logit_artifact.add_file(str(LOGIT_MODEL_PATH))
-            wandb.log_artifact(logit_artifact)
+            wandb.log_artifact(logit_artifact, aliases=["latest", "prod"])
 
             if WANDB_LOG_PROCESSED_DATA:
                 data_artifact = wandb.Artifact(
@@ -456,6 +457,20 @@ def main():
         logger.info("  Model artifact : %s", LOGIT_MODEL_PATH)
         logger.info("  Predictions    : %s", KMEANS_PRED_PATH)
 
+        if wandb_run is not None and WANDB_LOG_PREDICTIONS:
+            for name, path in [
+                ("kmeans", KMEANS_PRED_PATH),
+                ("dtrees", DTREES_PRED_PATH),
+                ("logit", LOGIT_PRED_PATH),
+            ]:
+                pred_artifact = wandb.Artifact(
+                    name=f"{WANDB_MODEL_ARTIFACT_NAME}_{name}_predictions",
+                    type="predictions",
+                    description=f"{name} inference predictions",
+                )
+                pred_artifact.add_file(str(path))
+                wandb.log_artifact(pred_artifact)
+
     except Exception:
         logger.exception("Pipeline failed")
         if wandb_run is not None:
@@ -463,6 +478,9 @@ def main():
         raise
     finally:
         if wandb_run is not None and wandb.run is not None:
+            log_artifact = wandb.Artifact(name="pipeline_log", type="log")
+            log_artifact.add_file(str(LOG_FILE_PATH))
+            wandb.log_artifact(log_artifact)
             wandb.finish()
 
 if __name__ == "__main__":

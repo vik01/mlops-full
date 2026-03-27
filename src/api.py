@@ -17,13 +17,13 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import Any, List
+from typing import List
 
 import joblib
 import pandas as pd
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 import sys
 
 # Add the src directory to Python path so that main.py can keep using
@@ -32,7 +32,7 @@ SRC_DIR = Path(__file__).resolve().parent
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from main import load_config
+from utils import load_config
 from logger import configure_logging
 from logit_regression.logit_infer import run_logit_inference
 
@@ -61,51 +61,31 @@ configure_logging(log_level=log_level, log_file=log_file)
 # -----------------------------
 # Pydantic schemas
 # -----------------------------
+class HeartDiseaseRecord(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    Age: int
+    Sex: int
+    chest_pain_type: int = Field(alias="Chest pain type")
+    BP: int
+    Cholesterol: int
+    fbs_over_120: int = Field(alias="FBS over 120")
+    ekg_results: int = Field(alias="EKG results")
+    max_hr: int = Field(alias="Max HR")
+    exercise_angina: int = Field(alias="Exercise angina")
+    st_depression: float = Field(alias="ST depression")
+    slope_of_st: int = Field(alias="Slope of ST")
+    number_of_vessels_fluro: int = Field(alias="Number of vessels fluro")
+    Thallium: int
+
+
 class PredictionRequest(BaseModel):
-    data: List[dict[str, Any]]
+    data: List[HeartDiseaseRecord]
 
 
 class PredictionResponse(BaseModel):
     predictions: List[int]
     probabilities: List[float]
-
-
-# -----------------------------
-# Helper functions
-# -----------------------------
-def get_required_feature_columns() -> list[str]:
-    """
-    Collect all feature columns required for inference from config.yaml.
-    """
-    features_cfg = cfg.get("features", {}) or {}
-
-    required_columns = (
-        list(features_cfg.get("quantile_bin", []))
-        + list(features_cfg.get("categorical_onehot", []))
-        + list(features_cfg.get("numeric_passthrough", []))
-        + list(features_cfg.get("ordinal_encode", []))
-        + list(features_cfg.get("min_max_scaler", []))
-    )
-
-    # Remove duplicates while preserving order
-    return list(dict.fromkeys(required_columns))
-
-
-def validate_inference_dataframe(df: pd.DataFrame, required_columns: list[str]) -> None:
-    """
-    Perform lightweight validation for inference inputs.
-
-    This validation is intentionally inference-specific:
-    - input must not be empty
-    - all required feature columns must be present
-    - target column is NOT required
-    """
-    if df.empty:
-        raise ValueError("Input data is empty.")
-
-    missing = [col for col in required_columns if col not in df.columns]
-    if missing:
-        raise ValueError(f"Missing required inference columns: {missing}")
 
 
 def _load_model_from_wandb_prod():
@@ -130,7 +110,7 @@ def _load_model_from_wandb_prod():
         raise RuntimeError("Missing WANDB_API_KEY in environment variables.")
 
     if not entity:
-        raise RuntimeError("Missing wandb.entity in config.yaml.")
+        raise RuntimeError("Missing WANDB_ENTITY environment variable.")
 
     if not project:
         raise RuntimeError("Missing wandb.project in config.yaml.")
@@ -196,10 +176,10 @@ def health():
 @app.post("/predict", response_model=PredictionResponse)
 def predict(request: PredictionRequest):
     try:
-        df = pd.DataFrame(request.data)
+        if not request.data:
+            raise ValueError("Input data is empty.")
 
-        required_columns = get_required_feature_columns()
-        validate_inference_dataframe(df, required_columns)
+        df = pd.DataFrame([r.model_dump(by_alias=True) for r in request.data])
 
         preds_df = run_logit_inference(model, df, optimal_threshold)
 

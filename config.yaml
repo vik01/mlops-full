@@ -43,7 +43,6 @@ features:
   quantile_bin: []
   categorical_onehot: []
   numeric_passthrough:
-    - "id"
     - "Sex"
     - "FBS over 120"
     - "EKG results"
@@ -60,6 +59,7 @@ features:
     - "Cholesterol"
     - "Max HR"
   n_bins: 3
+  drop_col: "id"
 
 wandb:
   enabled: true
